@@ -15,7 +15,7 @@ class LoginPage(BasePage):
 
     def open(self) -> "LoginPage":
         """Открывает главную страницу сайта"""
-        super().open(URL)
+        self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "CheckoutPage":

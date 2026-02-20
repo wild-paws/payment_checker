@@ -10,6 +10,5 @@ class HeleketPage(BasePage):
 
     def is_payment_integration_present(self) -> bool:
         """Проверяет наличие логотипа Heleket на платёжной форме"""
-        self.page.wait_for_selector(HELEKET_LOGO)
-
-        return self.page.locator(HELEKET_LOGO).first.is_visible()
+        self.wait_for_selector(HELEKET_LOGO)
+        return self.is_first_visible(HELEKET_LOGO)

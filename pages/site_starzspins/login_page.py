@@ -14,7 +14,7 @@ class LoginPage(BasePage):
 
     def open(self) -> "LoginPage":
         """Открывает страницу сразу с модалкой логина"""
-        super().open(URL)
+        self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "WalletPage":
@@ -24,6 +24,6 @@ class LoginPage(BasePage):
         self.fill(LOGIN_INPUT, login)
         self.fill(PASSWORD_INPUT, password)
         self.click(SUBMIT_BUTTON)
-        self.page.wait_for_selector(SUBMIT_BUTTON, state="hidden")
+        self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 
         return WalletPage(self.page)

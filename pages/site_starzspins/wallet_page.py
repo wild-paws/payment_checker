@@ -12,9 +12,6 @@ class WalletPage(BasePage):
 
     def is_payment_integration_present(self) -> bool:
         """Перехватывает ответ на запрос провайдеров и проверяет наличие Praxis"""
-        with self.page.expect_response(lambda r: PROVIDERS_API in r.url) as response_info:
-            self.page.goto(URL)
-
-        body = response_info.value.json()
-        providers = [p["code"] for p in body.get("data", [])]
+        response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
+        providers = [p["code"] for p in response.json().get("data", [])]
         return PROVIDER_NAME in providers
