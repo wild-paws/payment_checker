@@ -68,6 +68,6 @@ class BasePage:
         """
         Возвращает True если первый из найденных элементов виден на странице.
         Используется когда селектор возвращает несколько элементов —
-        берём первый чтобы избежать ошибки strict mode violation.
+        берём первый, чтобы избежать ошибки strict mode violation.
         """
         return self.page.locator(selector).first.is_visible()

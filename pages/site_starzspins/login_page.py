@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import allure
 from playwright.sync_api import Page
 from pages.base_page import BasePage
+from pages.site_starzspins.wallet_page import WalletPage
 
 # URL страницы с модалкой логина — открывается сразу с формой входа через query параметр
 # Это позволяет пропустить клик на кнопку входа и сразу заполнять форму
@@ -31,8 +30,6 @@ class LoginPage(BasePage):
 
     def login(self, login: str, password: str) -> "WalletPage":
         """Заполняет форму входа и возвращает страницу кошелька после авторизации"""
-        from pages.site_starzspins.wallet_page import WalletPage
-
         with allure.step(f"Вводим логин: {login}"):
             self.fill(LOGIN_INPUT, login)
 
@@ -44,7 +41,7 @@ class LoginPage(BasePage):
             self.click(SUBMIT_BUTTON)
 
         with allure.step("Ожидаем закрытия формы входа"):
-            # Ждём пока кнопка входа исчезнет — это сигнал что авторизация прошла
+            # Ждём пока кнопка входа исчезнет — это сигнал, что авторизация прошла
             # и можно переходить к следующему шагу
             self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 

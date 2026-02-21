@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import allure
 from playwright.sync_api import Page
 from pages.base_page import BasePage
+from pages.site_365sms.heleket_page import HeleketPage
 
 # Кнопка перехода на страницу пополнения баланса в меню сайта
 PAYMENT_BUTTON = "//a[@href='/payments']"
@@ -23,8 +22,6 @@ class CheckoutPage(BasePage):
 
     def navigate_to_payment(self) -> "HeleketPage":
         """Проходит путь до платёжной формы и возвращает страницу Heleket после редиректа"""
-        from pages.site_365sms.heleket_page import HeleketPage
-
         with allure.step("Переходим на страницу пополнения баланса"):
             # Кликаем на кнопку пополнения — SPA загружает страницу без смены URL
             self.click(PAYMENT_BUTTON)
