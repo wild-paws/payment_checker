@@ -13,6 +13,7 @@ class CheckoutPage(BasePage):
         super().__init__(page)
 
     def navigate_to_payment(self) -> "HeleketPage":
+        """Проходит путь до платёжной формы и возвращает страницу Heleket после редиректа"""
         from pages.site_365sms.heleket_page import HeleketPage
 
         with allure.step("Переходим на страницу пополнения баланса"):

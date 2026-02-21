@@ -12,6 +12,7 @@ class WalletPage(BasePage):
         super().__init__(page)
 
     def is_payment_integration_present(self) -> bool:
+        """Открывает страницу депозита, перехватывает ответ API и проверяет наличие Praxis"""
         with allure.step("Открываем страницу депозита и перехватываем список провайдеров"):
             response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
 

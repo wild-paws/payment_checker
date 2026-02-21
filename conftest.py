@@ -44,6 +44,8 @@ def page(browser, request):
             )
         except Exception:
             pass
+        finally:
+            context.close()
     else:
         context.tracing.stop()
         context.close()

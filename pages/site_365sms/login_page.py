@@ -15,11 +15,13 @@ class LoginPage(BasePage):
         super().__init__(page)
 
     def open(self) -> "LoginPage":
+        """Открывает главную страницу сайта и возвращает себя для цепочки вызовов"""
         with allure.step("Открываем сайт 365sms.com"):
             self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "CheckoutPage":
+        """Открывает модалку входа, заполняет форму и возвращает страницу пополнения"""
         from pages.site_365sms.checkout_page import CheckoutPage
 
         with allure.step("Открываем форму входа"):

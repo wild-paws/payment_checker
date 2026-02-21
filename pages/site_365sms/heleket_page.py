@@ -10,6 +10,7 @@ class HeleketPage(BasePage):
         super().__init__(page)
 
     def is_payment_integration_present(self) -> bool:
+        """Ждёт загрузки страницы и проверяет наличие логотипа Heleket"""
         with allure.step("Ожидаем загрузки платёжной формы Heleket"):
             self.wait_for_selector(HELEKET_LOGO)
 

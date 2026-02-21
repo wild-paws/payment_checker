@@ -14,11 +14,13 @@ class LoginPage(BasePage):
         super().__init__(page)
 
     def open(self) -> "LoginPage":
+        """Открывает страницу сразу с модалкой логина и возвращает себя для цепочки"""
         with allure.step("Открываем сайт Starzspins с формой входа"):
             self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "WalletPage":
+        """Заполняет форму входа и возвращает страницу кошелька после авторизации"""
         from pages.site_starzspins.wallet_page import WalletPage
 
         with allure.step(f"Вводим логин: {login}"):
