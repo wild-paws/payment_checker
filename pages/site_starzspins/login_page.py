@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Page
 from pages.base_page import BasePage
 
@@ -13,17 +14,23 @@ class LoginPage(BasePage):
         super().__init__(page)
 
     def open(self) -> "LoginPage":
-        """Открывает страницу сразу с модалкой логина"""
-        self.goto(URL)
+        with allure.step("Открываем сайт Starzspins с формой входа"):
+            self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "WalletPage":
-        """Заполняет форму и выполняет вход, возвращает страницу кошелька"""
         from pages.site_starzspins.wallet_page import WalletPage
 
-        self.fill(LOGIN_INPUT, login)
-        self.fill(PASSWORD_INPUT, password)
-        self.click(SUBMIT_BUTTON)
-        self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
+        with allure.step(f"Вводим логин: {login}"):
+            self.fill(LOGIN_INPUT, login)
+
+        with allure.step("Вводим пароль"):
+            self.fill(PASSWORD_INPUT, password)
+
+        with allure.step("Нажимаем кнопку входа"):
+            self.click(SUBMIT_BUTTON)
+
+        with allure.step("Ожидаем закрытия формы входа"):
+            self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 
         return WalletPage(self.page)

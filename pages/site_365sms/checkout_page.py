@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Page
 from pages.base_page import BasePage
 
@@ -12,12 +13,18 @@ class CheckoutPage(BasePage):
         super().__init__(page)
 
     def navigate_to_payment(self) -> "HeleketPage":
-        """Переходит к форме оплаты и возвращает страницу платежного шлюза после редиректа."""
         from pages.site_365sms.heleket_page import HeleketPage
 
-        self.click(PAYMENT_BUTTON)
-        self.click(CRYPTO_BUTTON)
-        self.click(USDT_BUTTON)
-        self.click_and_wait_for_navigation(AMOUNT_BUTTON)
+        with allure.step("Переходим на страницу пополнения баланса"):
+            self.click(PAYMENT_BUTTON)
+
+        with allure.step("Выбираем способ оплаты: Crypto"):
+            self.click(CRYPTO_BUTTON)
+
+        with allure.step("Выбираем валюту: USDT (TRC20)"):
+            self.click(USDT_BUTTON)
+
+        with allure.step("Выбираем сумму 300₽ и ждём редиректа на платёжную форму"):
+            self.click_and_wait_for_navigation(AMOUNT_BUTTON)
 
         return HeleketPage(self.page)

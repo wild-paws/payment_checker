@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Page
 from pages.base_page import BasePage
 
@@ -14,17 +15,23 @@ class LoginPage(BasePage):
         super().__init__(page)
 
     def open(self) -> "LoginPage":
-        """Открывает главную страницу сайта"""
-        self.goto(URL)
+        with allure.step("Открываем сайт 365sms.com"):
+            self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "CheckoutPage":
-        """Открывает модалку входа, заполняет форму и выполняет вход"""
         from pages.site_365sms.checkout_page import CheckoutPage
 
-        self.click(OPEN_LOGIN_BUTTON)
-        self.fill(LOGIN_INPUT, login)
-        self.fill(PASSWORD_INPUT, password)
-        self.click(SUBMIT_BUTTON)
+        with allure.step("Открываем форму входа"):
+            self.click(OPEN_LOGIN_BUTTON)
+
+        with allure.step(f"Вводим логин: {login}"):
+            self.fill(LOGIN_INPUT, login)
+
+        with allure.step("Вводим пароль"):
+            self.fill(PASSWORD_INPUT, password)
+
+        with allure.step("Нажимаем кнопку входа"):
+            self.click(SUBMIT_BUTTON)
 
         return CheckoutPage(self.page)
