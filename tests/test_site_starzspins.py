@@ -1,4 +1,5 @@
 import allure
+
 from tests.base_test import BaseTest
 from pages.site_starzspins.login_page import LoginPage
 
