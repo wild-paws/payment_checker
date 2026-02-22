@@ -26,37 +26,39 @@
 
 ```
 pages/site_название/
-    __init__.py         ← пустой файл
-    login_page.py       ← авторизация
-    ...                 ← страницы навигации (сколько нужно)
-    провайдер_page.py   ← проверка интеграции + кошелёк
+    __init__.py       ← пустой файл
+    login_page.py     ← авторизация → возвращает HomePage
+    home_page.py      ← навигация к оплате → возвращает PaymentPage
+    payment_page.py   ← платёжная форма, проверка интеграции, кошелёк
 
 tests/
     test_site_название.py
 ```
 
-Страниц навигации может быть сколько угодно — столько сколько шагов до платёжной формы.
-Каждая страница возвращает следующую в цепочке.
+Страниц навигации между `login_page` и `payment_page` может быть больше — столько сколько шагов до платёжной формы.
+Каждая возвращает следующую в цепочке.
 
 ---
 
 ## Архитектура
 
-Паттерн — Page Object + цепочка вызовов. Тест знает только методы страниц, не знает про селекторы.
+Паттерн — Page Object + цепочка вызовов. Тест читается как сценарий — каждый шаг явный, никаких селекторов, никакого
+Playwright напрямую.
 
 ```python
-# Так выглядит тест — никаких селекторов, никакого Playwright напрямую
-result_page = (
+# Так выглядит тест
+payment_page = (
     LoginPage(self.page)
     .open()
+    .click_sign_in()
     .login(self.credentials["login"], self.credentials["password"])
-    .navigate_to_section()
-    .select_crypto()
+    .open_wallet()
+    .select_usdt_trc20()
     .confirm_amount()
 )
 
-result_page.attach_wallet_address()
-assert result_page.is_payment_integration_present(), "..."
+payment_page.attach_wallet_address()
+assert payment_page.is_payment_integration_present(), "..."
 ```
 
 **Порядок в тесте обязательный**: `attach_wallet_address()` всегда до `assert`.
@@ -68,36 +70,28 @@ assert result_page.is_payment_integration_present(), "..."
 
 Все страницы наследуются от `BasePage`. Используй только его методы — не вызывай `self.page.*` напрямую.
 
-Исключения где `self.page.*` допустим:
-- `frame_locator` для работы с iframe
-- `expect_response` уже завёрнут в `goto` с predicate — используй его
+Исключение — `frame_locator` для работы с iframe. Сохраняй его в `self._frame` в `__init__` и используй через
+`self._frame.locator(...)`.
 
 Доступные методы:
 
-| Метод | Что делает |
-|---|---|
-| `goto(url)` | Переход на страницу |
-| `goto(url, predicate)` | Переход + перехват API ответа, возвращает response |
-| `fill(selector, value)` | Ввод текста |
-| `click(selector)` | Клик |
-| `click_and_wait_for_navigation(selector)` | Клик + ожидание редиректа |
-| `wait_for_selector(selector, state)` | Явное ожидание элемента |
-| `is_first_visible(selector)` | Видимость первого из найденных элементов |
-| `get_attribute(selector, attribute)` | Значение атрибута элемента |
+| Метод                                             | Что делает                                               |
+|---------------------------------------------------|----------------------------------------------------------|
+| `goto(url)`                                       | Переход на страницу — только для открытия стартового URL |
+| `fill(selector, value)`                           | Ввод текста                                              |
+| `click(selector)`                                 | Клик                                                     |
+| `click_and_capture_response(selector, predicate)` | Клик + перехват API ответа, возвращает response          |
+| `is_first_visible(selector)`                      | Видимость первого из найденных элементов                 |
+| `get_attribute(selector, attribute)`              | Значение атрибута элемента                               |
 
 ---
 
 ## Про ожидания
 
-**Playwright ждёт сам.** `fill`, `click`, `get_attribute` — все уже ждут появления и кликабельности элемента.
+**Playwright ждёт сам.** `fill`, `click`, `get_attribute` — все уже ждут появления и кликабельности элемента. Не
+добавляй лишних ожиданий.
 
-Не добавляй `wait_for_selector` перед обычными действиями — это лишнее.
-
-`wait_for_selector` нужен только в одном случае: когда нужно дождаться **исчезновения** элемента.
-Пример — ждём закрытия модалки после логина:
-```python
-self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
-```
+Если тест нестабилен — смотри раздел "Если тест падает" ниже.
 
 ---
 
@@ -106,26 +100,32 @@ self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 Не добавляй ожидания наугад. Сначала разберись где и почему падает.
 
 **Шаг 1 — запроси у пользователя:**
+
 - На каком шаге падает? Какой степ последний в отчёте?
-- Какая ошибка? (TimeoutError, AttributeError, AssertionError — это разные проблемы)
+- Какая ошибка? (`TimeoutError`, `AttributeError`, `AssertionError` — это разные проблемы)
 - Посмотри видео в Allure отчёте — что происходит на экране в момент падения?
-- Открой трейс: скачай `trace.zip` из отчёта и загрузи на https://trace.playwright.dev/ — там видно каждое действие, снапшот DOM и сетевые запросы в момент падения
+- Открой трейс: скачай `trace.zip` из отчёта и загрузи на https://trace.playwright.dev/ — там видно каждое действие,
+  снапшот DOM и сетевые запросы в момент падения
 
 **Шаг 2 — анализируй причину:**
 
 `TimeoutError` на `click` или `fill` — элемент не появился за отведённое время.
-Возможные причины: неверный селектор, страница ещё грузится, элемент в iframe, элемент появляется только после другого действия.
+Возможные причины: неверный селектор, страница ещё грузится, элемент внутри iframe.
 
-`TimeoutError` на `expect_response` — API запрос не пришёл при переходе на страницу.
-Возможная причина: страница открывается кликом, а не через `goto` — ответ уходит до регистрации обработчика.
+`TimeoutError` на `click_and_capture_response` — API запрос не был перехвачен.
+Возможная причина: запрос уходит до регистрации обработчика. `click_and_capture_response` регистрирует обработчик до
+клика — убедись что используешь именно его, а не отдельный `click`.
 
-`AttributeError: 'NoneType'` на `_providers_response.json()` — `open()` не был вызван или API запрос не был перехвачен.
+`AttributeError: 'NoneType'` на `_providers_response.json()` — API ответ не был передан в `PaymentPage`.
 
-`AssertionError` на `is_payment_integration_present` — интеграция реально отсутствует, либо изменился формат ответа API или селектор логотипа.
+`AssertionError` на `is_payment_integration_present` — интеграция реально отсутствует, либо изменился формат ответа API
+или селектор логотипа.
 
 **Шаг 3 — если нужно добавить ожидание:**
 
-Добавляй только если понял конкретную причину. Например, если после клика контент подгружается с задержкой и следующий элемент ещё не в DOM — можно добавить `wait_for_selector` перед следующим действием. Но сначала убедись что проблема именно в этом, а не в неверном селекторе.
+Только если понял конкретную причину. Если после клика следующий элемент появляется с задержкой и Playwright не
+успевает — можно добавить `self.page.wait_for_selector(selector)` напрямую. Но сначала убедись что проблема именно в
+этом, а не в неверном селекторе.
 
 ---
 
@@ -133,90 +133,109 @@ self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 
 ### Паттерн 1 — проверка по логотипу
 
-Тест доходит до страницы провайдера и проверяет наличие его логотипа.
+Тест доходит до платёжной формы провайдера и проверяет наличие его логотипа.
+Смотри живой пример: `pages/site_365sms/`
+
+```
+login_page.login()  →  HomePage
+home_page.confirm_amount()  →  PaymentPage
+```
 
 ```python
-# login_page.py — login() возвращает следующую страницу навигации
-return NextPage(self.page)
+# payment_page.py
+class PaymentPage(BasePage):
 
-# провайдер_page.py
-def is_payment_integration_present(self) -> bool:
-    """Проверяет наличие логотипа провайдера на странице"""
-    with allure.step("Проверяем наличие логотипа ProviderName"):
-        return self.is_first_visible(PROVIDER_LOGO)
+    def is_payment_integration_present(self) -> bool:
+        """Проверяет наличие логотипа провайдера на странице оплаты"""
+        with allure.step("Проверяем наличие логотипа ProviderName"):
+            # is_first_visible берёт первый если селектор находит несколько элементов
+            return self.is_first_visible(PROVIDER_LOGO)
 
-def attach_wallet_address(self) -> None:
-    """Извлекает адрес кошелька и прикрепляет к allure репорту"""
-    with allure.step("Извлекаем адрес кошелька"):
-        wallet_address = self.get_attribute(WALLET_CONTAINER, "title")
-    with allure.step(f"Адрес кошелька: {wallet_address}"):
-        allure.attach(
-            wallet_address or "Адрес не найден",
-            name="Адрес кошелька",
-            attachment_type=allure.attachment_type.TEXT
-        )
+    def attach_wallet_address(self) -> None:
+        """Извлекает адрес кошелька и прикрепляет к allure репорту"""
+        with allure.step("Извлекаем адрес кошелька"):
+            # Адрес может быть в атрибуте title или в тексте элемента — смотри промт
+            wallet_address = self.get_attribute(WALLET_CONTAINER, "title")
+        with allure.step(f"Адрес кошелька: {wallet_address}"):
+            allure.attach(
+                wallet_address or "Адрес не найден",
+                name="Адрес кошелька",
+                attachment_type=allure.attachment_type.TEXT
+            )
 ```
 
 ### Паттерн 2 — проверка по API
 
-Тест перехватывает API ответ при открытии страницы депозита и ищет провайдера в JSON.
+Тест перехватывает API ответ в момент клика на кнопку открытия платёжной формы.
+Перехват происходит в `HomePage` через `click_and_capture_response`.
+`PaymentPage` получает ответ через конструктор.
+Смотри живой пример: `pages/site_starzspins/`
 
-```python
-# login_page.py — login() вызывает open() ЗДЕСЬ, не в тесте
-# open() перехватывает API ответ при переходе на страницу
-# если вызвать open() позже — запрос уже ушёл и ответ пропущен
-return WalletPage(self.page).open()
-
-# wallet_page.py
-def __init__(self, page: Page):
-    super().__init__(page)
-    self._providers_response = None  # заполняется в open()
-
-def open(self) -> "WalletPage":
-    """Открывает страницу депозита и перехватывает список провайдеров"""
-    with allure.step("Открываем страницу депозита и перехватываем список провайдеров"):
-        self._providers_response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
-    return self
-
-def is_payment_integration_present(self) -> bool:
-    """Проверяет наличие провайдера в перехваченном ответе API"""
-    with allure.step(f"Проверяем наличие провайдера {PROVIDER_NAME} в ответе API"):
-        providers = [p["code"] for p in self._providers_response.json().get("data", [])]
-        return PROVIDER_NAME in providers
+```
+login_page.login()  →  HomePage
+home_page.open_wallet()  →  PaymentPage(page, response)
 ```
 
-Структура JSON может отличаться — смотри в промте или адаптируй под реальный ответ.
+```python
+# home_page.py
+PROVIDERS_API = "/api/deposit/get_providers"  # часть URL, не полный адрес
+
+
+def open_wallet(self) -> "PaymentPage":
+    """Кликает на кнопку кошелька и перехватывает список провайдеров"""
+    with allure.step("Открываем кошелёк и перехватываем список провайдеров"):
+        response = self.click_and_capture_response(
+            WALLET_BUTTON,
+            lambda r: PROVIDERS_API in r.url
+        )
+    return PaymentPage(self.page, response)
+
+
+# payment_page.py
+class PaymentPage(BasePage):
+    def __init__(self, page: Page, providers_response: Response):
+        super().__init__(page)
+        # Ответ API — передаётся из HomePage, используется в is_payment_integration_present
+        self._providers_response = providers_response
+        # frame_locator ленивый — iframe ищется только при первом действии внутри него
+        self._frame = self.page.frame_locator(PAYMENT_IFRAME)
+
+    def is_payment_integration_present(self) -> bool:
+        """Проверяет наличие провайдера в перехваченном ответе API"""
+        with allure.step(f"Проверяем наличие провайдера {PROVIDER_NAME} в ответе API"):
+            providers = [p["code"] for p in self._providers_response.json().get("data", [])]
+            return PROVIDER_NAME in providers
+```
+
+Структура JSON может отличаться — смотри в промте и адаптируй `is_payment_integration_present()` под реальный ответ.
 
 ---
 
 ## Оформление кода
 
 **Константы** — каждая с комментарием что это и когда появляется:
+
 ```python
-# Кнопка выбора криптовалюты — появляется после выбора способа оплаты
-CRYPTO_BUTTON = "//button/span[contains(text(),'CRYPTO')]"
+# Кнопка кошелька в шапке — появляется после авторизации
+WALLET_BUTTON = "//button[@aria-label='Wallet']"
 ```
 
-**Степы** — каждое действие в `allure.step`, описывай что происходит после:
+**Степы** — каждое действие в `allure.step`, описывай что происходит после клика:
+
 ```python
-with allure.step("Выбираем способ оплаты: Crypto"):
-    # После клика появляются доступные криптовалюты
-    self.click(CRYPTO_BUTTON)
+with allure.step("Выбираем способ оплаты: USDT TRC-20"):
+    # После клика появляется поле ввода суммы
+    self._frame.locator(PAYMENT_METHOD_DROPDOWN).click()
 ```
 
-**Docstring** — у каждого метода, объясняй что возвращает и зачем:
+**Docstring** — у каждого метода, коротко что делает и что возвращает:
+
 ```python
-def navigate_to_deposit(self) -> "DepositPage":
-    """Переходит в раздел депозита и возвращает страницу выбора метода оплаты"""
+def open_wallet(self) -> "PaymentPage":
+    """Кликает на кнопку кошелька и перехватывает список провайдеров"""
 ```
 
-**`__init__`** — не добавляй если в нём только `super().__init__(page)`. Python вызовет родительский сам. Нужен только если добавляешь свои атрибуты как в `WalletPage`.
+**`__init__`** — не добавляй если только `super().__init__(page)`. Нужен только если добавляешь свои атрибуты — как в
+`PaymentPage` паттерна 2.
 
 **Аннотации типов** — на всех методах, включая `-> None`.
-
----
-
-## Пример готового файла
-
-Смотри `pages/site_365sms/checkout_page.py` — паттерн 1, навигация через несколько шагов.
-Смотри `pages/site_starzspins/wallet_page.py` — паттерн 2, перехват API + iframe.
