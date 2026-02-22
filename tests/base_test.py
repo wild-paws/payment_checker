@@ -5,8 +5,7 @@ class BaseTest:
     """
     Базовый класс для всех тестов.
     Автоматически инжектирует page и credentials через фикстуру setup.
-    page и credentials объявлены как None — реальные значения присваиваются
-    фикстурой setup перед каждым тестом через pytest dependency injection.
+    self.page и self.credentials доступны в каждом тесте после инициализации фикстурой.
     """
 
     @pytest.fixture(autouse=True)

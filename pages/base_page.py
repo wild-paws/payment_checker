@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, Callable
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, Response
 
 
 class BasePage:
@@ -15,7 +15,7 @@ class BasePage:
         # Объект страницы Playwright — основной инструмент взаимодействия с браузером
         self.page = page
 
-    def goto(self, url: str, predicate=None):
+    def goto(self, url: str, predicate: Optional[Callable] = None) -> Optional[Response]:
         """
         Переходит на указанный URL.
         Если передан predicate — ждёт ответа от сервера удовлетворяющего условию

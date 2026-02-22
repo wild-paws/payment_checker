@@ -19,7 +19,7 @@ def clean_reports():
     for folder in ["reports/allure", "reports/videos", "reports/traces"]:
         shutil.rmtree(folder, ignore_errors=True)
         os.makedirs(folder, exist_ok=True)
-    yield  # ← здесь можно добавить teardown логику в будущем
+    yield
 
 
 @pytest.fixture(scope="session")
@@ -53,6 +53,7 @@ def page(browser, request):
         record_video_dir="reports/videos",
         record_video_size={"width": 1280, "height": 720}
     )
+    # screenshots=True — скриншот при каждом действии, snapshots=True — снапшот DOM
     context.tracing.start(screenshots=True, snapshots=True)
     page = context.new_page()
 
@@ -98,9 +99,9 @@ def pytest_runtest_makereport(item, call):
         except Exception:
             pass
 
-        # Берём путь до закрытия — после закрытия path() работает, но лучше до
+        # Берём путь до закрытия контекста — video объект доступен пока контекст жив
         video_path = page.video.path()
-        # Закрываем контекст — только после этого видео записывается на диск
+        # Закрываем контекст — только после этого Playwright записывает файл на диск
         context.close()
 
         try:
