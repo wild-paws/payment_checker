@@ -6,7 +6,7 @@ from pages.site_bet25.home_page import HomePage
 URL = "https://bet25.com/"
 
 # Кнопка открытия формы входа в шапке сайта
-SIGN_IN_BUTTON = "//a[@href='/login']"
+SIGN_IN_BUTTON = "//a[text()='Login']"
 
 # Поле ввода логина в модальном окне входа
 LOGIN_INPUT = "//input[@id='login']"
