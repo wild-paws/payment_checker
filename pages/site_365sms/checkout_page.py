@@ -1,5 +1,4 @@
 import allure
-from playwright.sync_api import Page
 from pages.base_page import BasePage
 from pages.site_365sms.heleket_page import HeleketPage
 
@@ -18,23 +17,31 @@ AMOUNT_BUTTON = "//button/span[contains(text(),'300₽')]"
 
 class CheckoutPage(BasePage):
 
-    def navigate_to_payment(self) -> "HeleketPage":
-        """Проходит путь до платёжной формы и возвращает страницу Heleket после редиректа"""
+    def go_to_payments(self) -> "CheckoutPage":
+        """Переходит на страницу пополнения баланса и возвращает себя для цепочки"""
         with allure.step("Переходим на страницу пополнения баланса"):
-            # Кликаем на кнопку пополнения — SPA загружает страницу без смены URL
+            # SPA загружает страницу без смены URL
             self.click(PAYMENT_BUTTON)
+        return self
 
+    def select_crypto(self) -> "CheckoutPage":
+        """Выбирает способ оплаты Crypto и возвращает себя для цепочки"""
         with allure.step("Выбираем способ оплаты: Crypto"):
             # После клика появляются доступные криптовалюты
             self.click(CRYPTO_BUTTON)
+        return self
 
+    def select_usdt_trc20(self) -> "CheckoutPage":
+        """Выбирает валюту USDT TRC20 и возвращает себя для цепочки"""
         with allure.step("Выбираем валюту: USDT (TRC20)"):
             # После выбора валюты появляются доступные суммы
             self.click(USDT_BUTTON)
+        return self
 
+    def confirm_amount(self) -> "HeleketPage":
+        """Выбирает сумму 300₽ и возвращает страницу Heleket после редиректа"""
         with allure.step("Выбираем сумму 300₽ и ждём редиректа на платёжную форму"):
             # После выбора суммы происходит редирект на внешний домен heleket.com
             # click_and_wait_for_navigation ждёт завершения редиректа перед продолжением
             self.click_and_wait_for_navigation(AMOUNT_BUTTON)
-
         return HeleketPage(self.page)

@@ -16,7 +16,10 @@ class Test365sms(BaseTest):
             LoginPage(self.page)
             .open()
             .login(self.credentials["login"], self.credentials["password"])
-            .navigate_to_payment()
+            .go_to_payments()
+            .select_crypto()
+            .select_usdt_trc20()
+            .confirm_amount()
         )
 
         heleket_page.attach_wallet_address()
