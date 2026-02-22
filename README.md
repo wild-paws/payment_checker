@@ -21,6 +21,7 @@
 При установке отметить галку **Add Python to PATH**.
 
 Проверить:
+
 ```bash
 python --version
 ```
@@ -58,6 +59,7 @@ copy .env.example .env
 ```
 
 Открыть `.env` и заполнить:
+
 ```
 LOGIN=твой_логин
 PASSWORD=твой_пароль
@@ -94,6 +96,7 @@ allure serve reports/allure
 ```
 
 В отчёте для каждого теста:
+
 - Пошаговый лог с результатом каждого действия
 - Адрес крипто-кошелька в аттачменте
 - При падении — видео и трейс Playwright для разбора причины
@@ -118,6 +121,7 @@ allure serve reports/allure
 3. Перетащи скачанный `trace.zip` в окно браузера
 
 В трейсвьюере:
+
 - Слева — таймлайн действий
 - По клику на действие — снапшот страницы в этот момент
 - Вкладка **Network** — все запросы и ответы
@@ -129,7 +133,8 @@ allure serve reports/allure
 
 ## Как добавить новый сайт
 
-Добавление нового сайта делается через **Codex** — ИИ-агент пишет код и создаёт Pull Request в репозиторий. Твоя задача — подготовить для него всю нужную информацию, а после принять PR и обновить локальный код.
+Добавление нового сайта делается через **Codex** — ИИ-агент пишет код и создаёт Pull Request в репозиторий. Твоя
+задача — подготовить для него всю нужную информацию, а после принять PR и обновить локальный код.
 
 ### Шаг 1. Подготовить аккаунт
 
@@ -147,6 +152,7 @@ allure serve reports/allure
 6. Дойди до экрана с адресом кошелька
 
 По ходу пути собери:
+
 - URL каждой страницы на которую переходишь
 - XPath или CSS селекторы всех элементов с которыми взаимодействуешь (кнопки, поля, дропдауны)
 - Если видишь API запрос к процессингу в Network — запомни путь (например `/api/deposit/get_providers`)
@@ -161,18 +167,20 @@ allure serve reports/allure
 > Добавь новый сайт **example-casino.com** в проект payment_checker.
 >
 > **Авторизация:**
-> Страница входа: `https://example-casino.com/?modal=login`
+> Стартовая страница: `https://example-casino.com/`
+> Кнопка открытия формы входа: `//button[@aria-label='login']`
 > Поле логина: `//input[@name='email']`
 > Поле пароля: `//input[@name='password']`
 > Кнопка входа: `//button[@data-test='submit']`
-> После клика модалка закрывается — нужно дождаться исчезновения кнопки перед следующим шагом.
+> После логина в шапке появляется кнопка кошелька.
 >
 > **Путь до платёжной формы:**
-> После логина открываем депозит: `https://example-casino.com/?modal=deposit`
-> При открытии страницы в Network уходит запрос `/api/payments/methods` — в ответе JSON список провайдеров, нужный провайдер называется `CryptoProvider` в поле `name`.
+> Кнопка кошелька в шапке: `//button[@aria-label='wallet']`
+> В момент клика на кнопку уходит запрос `/api/payments/methods` — в ответе JSON список провайдеров,
+> нужный провайдер называется `CryptoProvider` в поле `name`.
 >
-> **Кошелёк:**
-> Платёжная форма рендерится в iframe `//iframe[@id='crypto-frame']`
+> **Платёжная форма:**
+> Форма рендерится в iframe `//iframe[@id='crypto-frame']`
 > Дропдаун выбора валюты: `//div[@class='currency-select']`
 > Опция USDT TRC-20: `//li[text()='USDT TRC20']`
 > Поле суммы: `//input[@id='amount']`
@@ -188,6 +196,7 @@ allure serve reports/allure
 ### Шаг 4. Принять Pull Request
 
 Codex создаст PR с новыми файлами. Проверь что появились:
+
 - `pages/site_название/` с нужными файлами
 - `tests/test_site_название.py`
 
@@ -214,25 +223,33 @@ allure serve reports/allure
 
 ```
 payment_checker/
-├── .env                        # креды (не коммитить!)
-├── .env.example                # шаблон для .env
-├── requirements.txt            # зависимости с зафиксированными версиями
-├── pytest.ini                  # настройки pytest
-├── conftest.py                 # фикстуры: браузер, страница, креды, allure хуки
-├── AGENTS.md                   # инструкция для Codex
+├── .env                            # креды (не коммитить!)
+├── .env.example                    # шаблон для .env
+├── .gitignore
+├── README.md
+├── AGENTS.md                       # инструкция для Codex
+├── requirements.txt                # зависимости с зафиксированными версиями
+├── pytest.ini                      # настройки pytest
+├── conftest.py                     # фикстуры: браузер, страница, креды, allure хуки
 ├── config/
-│   └── settings.py             # загрузка настроек из .env
+│   ├── __init__.py
+│   └── settings.py                 # загрузка настроек из .env
 ├── pages/
-│   ├── base_page.py            # базовый класс с общими методами
-│   ├── site_365sms/            # страницы для 365sms.com
-│   │   ├── login_page.py       # авторизация
-│   │   ├── checkout_page.py    # навигация к платёжной форме
-│   │   └── heleket_page.py     # проверка логотипа + адрес кошелька
-│   └── site_starzspins/        # страницы для starzspins.com
-│       ├── login_page.py       # авторизация
-│       └── wallet_page.py      # проверка провайдера через API + адрес кошелька
+│   ├── __init__.py
+│   ├── base_page.py                # базовый класс с общими методами
+│   ├── site_365sms/
+│   │   ├── __init__.py
+│   │   ├── login_page.py           # авторизация
+│   │   ├── home_page.py            # навигация к платёжной форме
+│   │   └── payment_page.py         # проверка логотипа + адрес кошелька
+│   └── site_starzspins/
+│       ├── __init__.py
+│       ├── login_page.py           # авторизация
+│       ├── home_page.py            # открытие кошелька + перехват API
+│       └── payment_page.py         # проверка провайдера через API + адрес кошелька
 └── tests/
-    ├── base_test.py            # базовый класс тестов
-    ├── test_site_365sms.py     # тест для 365sms.com
-    └── test_site_starzspins.py # тест для starzspins.com
+    ├── __init__.py
+    ├── base_test.py                # базовый класс тестов
+    ├── test_site_365sms.py         # тест для 365sms.com
+    └── test_site_starzspins.py     # тест для starzspins.com
 ```
