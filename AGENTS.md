@@ -54,23 +54,24 @@ tests/
 Playwright напрямую.
 
 ```python
-# Так выглядит тест
+# Так выглядит тест — никаких селекторов, никакого Playwright напрямую
 payment_page = (
     LoginPage(self.page)
     .open()
     .click_sign_in()
     .login(self.credentials["login"], self.credentials["password"])
-    .open_wallet()
-    .select_usdt_trc20()
-    .confirm_amount()
+    .go_to_deposit()
+    .select_usdt()
 )
 
 payment_page.attach_wallet_address()
-assert payment_page.is_payment_integration_present(), "..."
+assert payment_page.is_payment_integration_present(...), "..."
 ```
 
 **Порядок в тесте обязательный**: `attach_wallet_address()` всегда до `assert`.
 Кошелёк должен собраться даже если проверка упадёт.
+
+**Сигнатура `is_payment_integration_present` зависит от паттерна** — смотри раздел ниже.
 
 ---
 
@@ -140,8 +141,11 @@ assert payment_page.is_payment_integration_present(), "..."
 
 `AttributeError: 'NoneType'` на `_providers_response.json()` — API ответ не был передан в `PaymentPage`.
 
-`AssertionError` на `is_payment_integration_present` — интеграция реально отсутствует, либо изменился формат ответа API
-или селектор логотипа.
+`AttributeError: 'NoneType'` на `_wallet_address in known_wallets` — `attach_wallet_address()` не был вызван до
+`is_payment_integration_present()`.
+
+`AssertionError` на `is_payment_integration_present` — интеграция реально отсутствует, либо изменился формат ответа
+API, селектор логотипа, или адрес кошелька сменился и не обновлён в `KNOWN_WALLETS`.
 
 **Шаг 3 — если нужно добавить ожидание:**
 
@@ -151,11 +155,11 @@ assert payment_page.is_payment_integration_present(), "..."
 
 ---
 
-## Два паттерна проверки
+## Три паттерна проверки
 
 ### Паттерн 1 — проверка по логотипу
 
-Тест доходит до платёжной формы провайдера и проверяет наличие его логотипа.
+Тест доходит до платёжной формы провайдера и проверяет наличие его логотипа на странице.
 Смотри живой пример: `pages/site_365sms/`
 
 ```
@@ -176,7 +180,6 @@ class PaymentPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
-            # Адрес может быть в атрибуте title или в тексте элемента — смотри промт
             wallet_address = self.get_attribute(WALLET_CONTAINER, "title")
         with allure.step(f"Адрес кошелька: {wallet_address}"):
             allure.attach(
@@ -186,9 +189,17 @@ class PaymentPage(BasePage):
             )
 ```
 
+```python
+# test
+payment_page.attach_wallet_address()
+assert payment_page.is_payment_integration_present(), "Логотип провайдера не найден"
+```
+
+---
+
 ### Паттерн 2 — проверка по API
 
-Тест перехватывает API ответ в момент клика на кнопку открытия платёжной формы.
+Тест перехватывает API ответ в момент клика на кнопку открытия платёжной формы и ищет провайдера в JSON.
 Перехват происходит в `HomePage` через `click_and_capture_response`.
 `PaymentPage` получает ответ через конструктор.
 Смотри живой пример: `pages/site_starzspins/`
@@ -217,10 +228,8 @@ def open_wallet(self) -> "PaymentPage":
 class PaymentPage(BasePage):
     def __init__(self, page: Page, providers_response: Response):
         super().__init__(page)
-        # Ответ API — передаётся из HomePage, используется в is_payment_integration_present
-        self._providers_response = providers_response
-        # frame_locator ленивый — iframe ищется только при первом действии внутри него
-        self._frame = self.page.frame_locator(PAYMENT_IFRAME)
+        self._providers_response = providers_response  # передаётся из HomePage
+        self._frame = self.page.frame_locator(PAYMENT_IFRAME)  # если форма в iframe
 
     def is_payment_integration_present(self) -> bool:
         """Проверяет наличие провайдера в перехваченном ответе API"""
@@ -229,7 +238,73 @@ class PaymentPage(BasePage):
             return PROVIDER_NAME in providers
 ```
 
+```python
+# test
+payment_page.attach_wallet_address()
+assert payment_page.is_payment_integration_present(), "Провайдер не найден в ответе API"
+```
+
 Структура JSON может отличаться — смотри в промте и адаптируй `is_payment_integration_present()` под реальный ответ.
+
+---
+
+### Паттерн 3 — проверка по адресу кошелька
+
+Используется когда провайдера определить невозможно, но кошелёк проверить нужно.
+Тест доходит до адреса кошелька, сохраняет его и сверяет со списком известных адресов из `.env`.
+Смотри живой пример: `pages/site_bet25/`
+
+```
+login_page.login()  →  HomePage
+home_page.select_usdt()  →  PaymentPage
+```
+
+```python
+# payment_page.py
+class PaymentPage(BasePage):
+    def __init__(self, page: Page):
+        super().__init__(page)
+        # Адрес кошелька — заполняется в attach_wallet_address()
+        # используется в is_payment_integration_present() для проверки
+        self._wallet_address = None
+
+    def attach_wallet_address(self) -> None:
+        """Извлекает адрес кошелька и прикрепляет к allure репорту"""
+        with allure.step("Извлекаем адрес кошелька"):
+            self._wallet_address = self.get_attribute(WALLET_CONTAINER, "title")
+        with allure.step(f"Адрес кошелька: {self._wallet_address}"):
+            allure.attach(
+                self._wallet_address or "Адрес не найден",
+                name="Адрес кошелька",
+                attachment_type=allure.attachment_type.TEXT
+            )
+
+    def is_payment_integration_present(self, known_wallets: list[str]) -> bool:
+        """
+        Проверяет что адрес кошелька совпадает с одним из известных.
+        known_wallets — список адресов из переменной KNOWN_WALLETS в .env файле.
+        Требует предварительного вызова attach_wallet_address().
+        """
+        with allure.step("Проверяем адрес кошелька по списку известных"):
+            return self._wallet_address in known_wallets
+```
+
+```python
+# test — импортируй settings и передавай KNOWN_WALLETS явно
+from config.settings import settings
+
+payment_page.attach_wallet_address()
+assert payment_page.is_payment_integration_present(settings.KNOWN_WALLETS),
+    "Адрес кошелька не совпал ни с одним из известных адресов в KNOWN_WALLETS"
+```
+
+Список кошельков хранится в `.env`:
+
+```
+KNOWN_WALLETS=TKfAamfPa5PDBxTG69jkY2qtZL9QFBXkZj,TXyz456def
+```
+
+Если кошелёк сменился — просто добавь новый адрес через запятую, не удаляя старый пока не убедился.
 
 ---
 
@@ -257,7 +332,9 @@ def open_wallet(self) -> "PaymentPage":
     """Кликает на кнопку кошелька и перехватывает список провайдеров"""
 ```
 
-**`__init__`** — не добавляй если только `super().__init__(page)`. Нужен только если добавляешь свои атрибуты — как в
-`PaymentPage` паттерна 2.
+**`__init__`** — не добавляй если только `super().__init__(page)`. Нужен если добавляешь свои атрибуты:
+
+- Паттерн 2 — `_providers_response` и `_frame`
+- Паттерн 3 — `_wallet_address`
 
 **Аннотации типов** — на всех методах, включая `-> None`.
