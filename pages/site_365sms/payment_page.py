@@ -1,5 +1,4 @@
 import allure
-from playwright.sync_api import Page
 from pages.base_page import BasePage
 
 # Логотип Heleket на платёжной форме — ссылка ведёт на сайт провайдера
@@ -10,10 +9,10 @@ HELEKET_LOGO = "//a[@href='https://heleket.com']"
 WALLET_ADDRESS_CONTAINER = "//p[text()='Адрес кошелька для перевода:']/following-sibling::div"
 
 
-class HeleketPage(BasePage):
+class PaymentPage(BasePage):
 
     def is_payment_integration_present(self) -> bool:
-        """Ждёт загрузки страницы и проверяет наличие логотипа Heleket"""
+        """Проверяет наличие логотипа Heleket на странице оплаты"""
         with allure.step("Проверяем наличие логотипа Heleket на странице"):
             # is_first_visible берёт первый из двух найденных элементов
             return self.is_first_visible(HELEKET_LOGO)

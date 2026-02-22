@@ -56,6 +56,18 @@ class BasePage:
         with self.page.expect_navigation():
             self.click(selector)
 
+    def click_and_capture_response(self, selector: str, predicate: Callable) -> Response:
+        """
+        Кликает на элемент и перехватывает ответ API удовлетворяющий условию.
+        Используется когда клик вызывает API запрос который нужно сохранить для проверки.
+        predicate — функция принимающая response и возвращающая True/False.
+        Возвращает перехваченный response.
+        """
+        # Регистрируем обработчик ДО клика — иначе можем пропустить быстрый ответ
+        with self.page.expect_response(predicate) as response_info:
+            self.click(selector)
+        return response_info.value
+
     def wait_for_selector(self, selector: str, state: str = "visible") -> None:
         """
         Ждёт появления элемента в указанном состоянии.

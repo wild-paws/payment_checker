@@ -1,7 +1,6 @@
 import allure
-from playwright.sync_api import Page
 from pages.base_page import BasePage
-from pages.site_365sms.checkout_page import CheckoutPage
+from pages.site_365sms.home_page import HomePage
 
 # Главная страница сайта — точка входа для авторизации
 URL = "https://365sms.com/"
@@ -28,8 +27,8 @@ class LoginPage(BasePage):
             self.goto(URL)
         return self
 
-    def login(self, login: str, password: str) -> "CheckoutPage":
-        """Открывает модалку входа, заполняет форму и возвращает страницу пополнения"""
+    def login(self, login: str, password: str) -> "HomePage":
+        """Открывает модалку входа, заполняет форму и возвращает главную страницу"""
         with allure.step("Открываем форму входа"):
             # Кликаем на кнопку в шапке — появляется модальное окно с формой
             self.click(OPEN_LOGIN_BUTTON)
@@ -44,5 +43,5 @@ class LoginPage(BasePage):
             # После клика SPA авторизует пользователя без смены URL
             self.click(SUBMIT_BUTTON)
 
-        # SPA не делает редирект — CheckoutPage сам дождётся нужных элементов
-        return CheckoutPage(self.page)
+        # SPA не делает редирект — HomePage сам дождётся нужных элементов
+        return HomePage(self.page)

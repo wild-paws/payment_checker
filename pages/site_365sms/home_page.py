@@ -1,6 +1,6 @@
 import allure
 from pages.base_page import BasePage
-from pages.site_365sms.heleket_page import HeleketPage
+from pages.site_365sms.payment_page import PaymentPage
 
 # Кнопка перехода на страницу пополнения баланса в меню сайта
 PAYMENT_BUTTON = "//a[@href='/payments']"
@@ -15,33 +15,33 @@ USDT_BUTTON = "//button/span[contains(text(),'USDT (TRC20)')]"
 AMOUNT_BUTTON = "//button/span[contains(text(),'300₽')]"
 
 
-class CheckoutPage(BasePage):
+class HomePage(BasePage):
 
-    def go_to_payments(self) -> "CheckoutPage":
+    def go_to_payments(self) -> "HomePage":
         """Переходит на страницу пополнения баланса и возвращает себя для цепочки"""
         with allure.step("Переходим на страницу пополнения баланса"):
             # SPA загружает страницу без смены URL
             self.click(PAYMENT_BUTTON)
         return self
 
-    def select_crypto(self) -> "CheckoutPage":
+    def select_crypto(self) -> "HomePage":
         """Выбирает способ оплаты Crypto и возвращает себя для цепочки"""
         with allure.step("Выбираем способ оплаты: Crypto"):
             # После клика появляются доступные криптовалюты
             self.click(CRYPTO_BUTTON)
         return self
 
-    def select_usdt_trc20(self) -> "CheckoutPage":
+    def select_usdt_trc20(self) -> "HomePage":
         """Выбирает валюту USDT TRC20 и возвращает себя для цепочки"""
         with allure.step("Выбираем валюту: USDT (TRC20)"):
             # После выбора валюты появляются доступные суммы
             self.click(USDT_BUTTON)
         return self
 
-    def confirm_amount(self) -> "HeleketPage":
-        """Выбирает сумму 300₽ и возвращает страницу Heleket после редиректа"""
+    def confirm_amount(self) -> "PaymentPage":
+        """Выбирает сумму 300₽ и возвращает страницу оплаты после редиректа"""
         with allure.step("Выбираем сумму 300₽ и ждём редиректа на платёжную форму"):
             # После выбора суммы происходит редирект на внешний домен heleket.com
             # click_and_wait_for_navigation ждёт завершения редиректа перед продолжением
             self.click_and_wait_for_navigation(AMOUNT_BUTTON)
-        return HeleketPage(self.page)
+        return PaymentPage(self.page)
