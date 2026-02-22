@@ -71,3 +71,10 @@ class BasePage:
         берём первый, чтобы избежать ошибки strict mode violation.
         """
         return self.page.locator(selector).first.is_visible()
+
+    def get_attribute(self, selector: str, attribute: str) -> str:
+        """
+        Возвращает значение атрибута элемента по XPath или CSS селектору.
+        Используется когда нужные данные хранятся в атрибуте элемента, а не в тексте.
+        """
+        return self.page.locator(selector).get_attribute(attribute)

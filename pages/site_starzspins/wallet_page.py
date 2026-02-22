@@ -9,7 +9,7 @@ URL = "https://www.starzspins.com/?modal=wallet&tab=deposit"
 PROVIDERS_API = "/api/deposit/get_providers"
 
 # Название провайдера платёжной интеграции которое ищем в ответе API
-PROVIDER_NAME = "Praxis!"
+PROVIDER_NAME = "Praxis"
 
 # Iframe в котором рендерится платёжная форма
 PAYMENT_IFRAME = "//iframe[@id='payment-iframe']"
@@ -34,13 +34,26 @@ WALLET_ADDRESS = "//span[@class='text']"
 class WalletPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
+        # Ответ API с провайдерами — заполняется в методе open()
+        # is_payment_integration_present() использует его для проверки
+        self._providers_response = None
 
     def open(self) -> "WalletPage":
+        """
+        Открывает страницу депозита и перехватывает ответ API со списком провайдеров.
+        Сохраняет ответ в _providers_response для последующей проверки.
+        Возвращает себя для цепочки вызовов — вызывается из login_page.login().
+        """
         with allure.step("Открываем страницу депозита"):
             self._providers_response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
         return self
 
     def is_payment_integration_present(self) -> bool:
+        """
+        Проверяет наличие нужного провайдера в ранее перехваченном ответе API.
+        Требует предварительного вызова open() — иначе _providers_response будет None.
+        Возвращает True если провайдер найден, False если нет.
+        """
         providers = [p["code"] for p in self._providers_response.json().get("data", [])]
         return PROVIDER_NAME in providers
 

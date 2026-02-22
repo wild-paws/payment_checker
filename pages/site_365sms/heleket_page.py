@@ -29,7 +29,7 @@ class HeleketPage(BasePage):
         """Извлекает адрес кошелька из атрибута title и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька для перевода"):
             # Адрес хранится в атрибуте title div-контейнера под заголовком
-            wallet_address = self.page.locator(WALLET_ADDRESS_CONTAINER).get_attribute("title")
+            wallet_address = self.get_attribute(WALLET_ADDRESS_CONTAINER, "title")
 
         with allure.step(f"Адрес кошелька: {wallet_address}"):
             allure.attach(
