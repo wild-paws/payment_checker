@@ -33,21 +33,21 @@ class BasePage:
             self.page.goto(url)
             return None
 
-    def fill(self, selector: str, value: str):
+    def fill(self, selector: str, value: str) -> None:
         """
         Вводит текст в поле по XPath или CSS селектору.
         Playwright автоматически ждёт появления элемента перед вводом.
         """
         self.page.fill(selector, value)
 
-    def click(self, selector: str):
+    def click(self, selector: str) -> None:
         """
         Кликает на элемент по XPath или CSS селектору.
         Playwright автоматически ждёт появления и кликабельности элемента.
         """
         self.page.click(selector)
 
-    def click_and_wait_for_navigation(self, selector: str):
+    def click_and_wait_for_navigation(self, selector: str) -> None:
         """
         Кликает на элемент и ждёт завершения навигации на другую страницу.
         Используется когда клик вызывает редирект — на внешний домен или другой URL.
@@ -56,7 +56,7 @@ class BasePage:
         with self.page.expect_navigation():
             self.click(selector)
 
-    def wait_for_selector(self, selector: str, state: str = "visible"):
+    def wait_for_selector(self, selector: str, state: str = "visible") -> None:
         """
         Ждёт появления элемента в указанном состоянии.
         state — состояние элемента:

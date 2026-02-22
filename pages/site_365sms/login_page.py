@@ -20,8 +20,6 @@ SUBMIT_BUTTON = "//button[@data-action='login']"
 
 
 class LoginPage(BasePage):
-    def __init__(self, page: Page):
-        super().__init__(page)
 
     def open(self) -> "LoginPage":
         """Открывает главную страницу сайта и возвращает себя для цепочки вызовов"""

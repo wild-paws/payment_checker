@@ -18,8 +18,6 @@ SUBMIT_BUTTON = "//button[@data-testid='login-submit-btn']"
 
 
 class LoginPage(BasePage):
-    def __init__(self, page: Page):
-        super().__init__(page)
 
     def open(self) -> "LoginPage":
         """Открывает страницу сразу с модалкой логина и возвращает себя для цепочки"""

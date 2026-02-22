@@ -17,7 +17,7 @@ def clean_reports():
            reports/traces — трейсы playwright при падении.
     """
     for folder in ["reports/allure", "reports/videos", "reports/traces"]:
-        shutil.rmtree(folder, ignore_errors=True)
+        shutil.rmtree(folder, ignore_errors=True)  # ignore_errors — папки может не быть при первом запуске
         os.makedirs(folder, exist_ok=True)
     yield
 
@@ -37,7 +37,7 @@ def browser():
             slow_mo=settings.SLOW_MO,
         )
         yield browser
-        browser.close()
+        browser.close()  # выполняется после завершения всей сессии тестов
 
 
 @pytest.fixture(scope="function")
@@ -97,7 +97,7 @@ def pytest_runtest_makereport(item, call):
                 attachment_type=allure.attachment_type.ZIP
             )
         except Exception:
-            pass
+            pass  # не даём упасть хуку если артефакт не удалось сохранить
 
         # Берём путь до закрытия контекста — video объект доступен пока контекст жив
         video_path = page.video.path()
@@ -112,7 +112,7 @@ def pytest_runtest_makereport(item, call):
                     attachment_type=allure.attachment_type.WEBM
                 )
         except Exception:
-            pass
+            pass  # не даём упасть хуку если артефакт не удалось сохранить
 
 
 @pytest.fixture(scope="session")

@@ -17,8 +17,6 @@ AMOUNT_BUTTON = "//button/span[contains(text(),'300₽')]"
 
 
 class CheckoutPage(BasePage):
-    def __init__(self, page: Page):
-        super().__init__(page)
 
     def navigate_to_payment(self) -> "HeleketPage":
         """Проходит путь до платёжной формы и возвращает страницу Heleket после редиректа"""
