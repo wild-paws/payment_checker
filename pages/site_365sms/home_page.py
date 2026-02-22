@@ -40,8 +40,7 @@ class HomePage(BasePage):
 
     def confirm_amount(self) -> "PaymentPage":
         """Выбирает сумму 300₽ и возвращает страницу оплаты после редиректа"""
-        with allure.step("Выбираем сумму 300₽ и ждём редиректа на платёжную форму"):
-            # После выбора суммы происходит редирект на внешний домен heleket.com
-            # click_and_wait_for_navigation ждёт завершения редиректа перед продолжением
+        with allure.step("Выбираем сумму 300₽ и ждём перехода на платёжную форму"):
+            # После клика происходит переход на внешний домен heleket.com
             self.click(AMOUNT_BUTTON)
         return PaymentPage(self.page)

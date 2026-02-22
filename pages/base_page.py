@@ -15,23 +15,12 @@ class BasePage:
         # Объект страницы Playwright — основной инструмент взаимодействия с браузером
         self.page = page
 
-    def goto(self, url: str, predicate: Optional[Callable] = None) -> Optional[Response]:
+    def goto(self, url: str) -> None:
         """
         Переходит на указанный URL.
-        Если передан predicate — ждёт ответа от сервера удовлетворяющего условию
-        и возвращает его. Используется для перехвата API ответов при навигации.
-        predicate — функция принимающая response и возвращающая True/False.
-        Возвращает response если передан predicate, иначе None.
+        Используется для открытия начальной страницы перед авторизацией.
         """
-        if predicate:
-            # Оборачиваем goto в expect_response — перехватываем нужный ответ
-            # контекстный менеджер гарантирует что не пропустим ответ
-            with self.page.expect_response(predicate) as response_info:
-                self.page.goto(url)
-            return response_info.value
-        else:
-            self.page.goto(url)
-            return None
+        self.page.goto(url)
 
     def fill(self, selector: str, value: str) -> None:
         """
@@ -58,16 +47,6 @@ class BasePage:
         with self.page.expect_response(predicate) as response_info:
             self.click(selector)
         return response_info.value
-
-    def wait_for_selector(self, selector: str, state: str = "visible") -> None:
-        """
-        Ждёт появления элемента в указанном состоянии.
-        state — состояние элемента:
-            visible — элемент виден на странице (по умолчанию),
-            hidden — элемент скрыт или удалён из DOM.
-        Используется когда Playwright не может автоматически дождаться элемента.
-        """
-        self.page.wait_for_selector(selector, state=state)
 
     def is_first_visible(self, selector: str) -> bool:
         """
