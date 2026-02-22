@@ -1,3 +1,5 @@
+from typing import Optional
+
 from playwright.sync_api import Page
 
 
@@ -72,7 +74,7 @@ class BasePage:
         """
         return self.page.locator(selector).first.is_visible()
 
-    def get_attribute(self, selector: str, attribute: str) -> str:
+    def get_attribute(self, selector: str, attribute: str) -> Optional[str]:
         """
         Возвращает значение атрибута элемента по XPath или CSS селектору.
         Используется когда нужные данные хранятся в атрибуте элемента, а не в тексте.

@@ -44,7 +44,7 @@ class WalletPage(BasePage):
         Сохраняет ответ в _providers_response для последующей проверки.
         Возвращает себя для цепочки вызовов — вызывается из login_page.login().
         """
-        with allure.step("Открываем страницу депозита"):
+        with allure.step("Открываем страницу депозита и перехватываем список провайдеров"):
             self._providers_response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
         return self
 
@@ -54,27 +54,36 @@ class WalletPage(BasePage):
         Требует предварительного вызова open() — иначе _providers_response будет None.
         Возвращает True если провайдер найден, False если нет.
         """
-        providers = [p["code"] for p in self._providers_response.json().get("data", [])]
-        return PROVIDER_NAME in providers
+        with allure.step(f"Проверяем наличие провайдера {PROVIDER_NAME} в ответе API"):
+            providers = [p["code"] for p in self._providers_response.json().get("data", [])]
+            return PROVIDER_NAME in providers
 
     def attach_wallet_address(self) -> None:
         """
-        Ждёт загрузки iframe, выбирает USDT TRC-20, вводит сумму,
-        подтверждает и извлекает адрес кошелька из перезагруженного iframe.
+        Открывает платёжную форму внутри iframe, выбирает USDT TRC-20,
+        вводит сумму, подтверждает и извлекает адрес кошелька.
         Прикрепляет адрес к allure репорту.
+        iframe работает как встроенная страница — взаимодействие через frame_locator
         """
-        with allure.step("Ожидаем загрузки платёжного iframe"):
-            frame = self.page.frame_locator(PAYMENT_IFRAME)
+        # frame_locator — ленивый локатор, не ждёт загрузки сразу
+        # реально начинает искать iframe только при первом действии внутри него
+        frame = self.page.frame_locator(PAYMENT_IFRAME)
 
         with allure.step("Выбираем способ оплаты: USDT TRC-20"):
+            # Открываем выпадающий список способов оплаты
             frame.locator(PAYMENT_METHOD_DROPDOWN).click()
+            # Выбираем USDT TRC-20 — после этого появляется поле ввода суммы
             frame.locator(USDT_OPTION).click()
 
         with allure.step("Вводим сумму и подтверждаем"):
+            # Вводим любую сумму — нам важен адрес кошелька, а не реальная оплата
             frame.locator(AMOUNT_INPUT).fill("300")
+            # После клика iframe обновляется и показывает реквизиты для перевода
             frame.locator(SUBMIT_BUTTON).click()
 
         with allure.step("Извлекаем адрес кошелька"):
+            # Адрес появляется в span после обновления iframe
+            # strip() убирает пробелы по краям которые есть в тексте элемента
             wallet_address = frame.locator(WALLET_ADDRESS).inner_text().strip()
 
         with allure.step(f"Адрес кошелька: {wallet_address}"):
