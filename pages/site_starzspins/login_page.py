@@ -45,4 +45,4 @@ class LoginPage(BasePage):
             # и можно переходить к следующему шагу
             self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 
-        return WalletPage(self.page)
+        return WalletPage(self.page).open()

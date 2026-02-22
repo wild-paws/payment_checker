@@ -1,5 +1,4 @@
 import allure
-
 from tests.base_test import BaseTest
 from pages.site_starzspins.login_page import LoginPage
 
@@ -10,13 +9,16 @@ class TestStarzspins(BaseTest):
 
     @allure.title("Проверка наличия провайдера Praxis в ответе API")
     @allure.description(
-        "Авторизуемся на starzspins.com, открываем страницу депозита и проверяем наличие провайдера Praxis в ответе API")
+        "Авторизуемся на starzspins.com, открываем страницу депозита, проверяем наличие "
+        "провайдера Praxis в ответе API и сохраняем адрес кошелька")
     def test_payment_integration(self):
         wallet_page = (
             LoginPage(self.page)
             .open()
             .login(self.credentials["login"], self.credentials["password"])
         )
+
+        wallet_page.attach_wallet_address()
 
         assert wallet_page.is_payment_integration_present(), \
             "Провайдер Praxis не найден в ответе API"

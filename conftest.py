@@ -19,6 +19,7 @@ def clean_reports():
     for folder in ["reports/allure", "reports/videos", "reports/traces"]:
         shutil.rmtree(folder, ignore_errors=True)
         os.makedirs(folder, exist_ok=True)
+    yield  # ← здесь можно добавить teardown логику в будущем
 
 
 @pytest.fixture(scope="session")

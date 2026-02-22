@@ -6,6 +6,9 @@ from pages.base_page import BasePage
 # На странице два элемента с этим селектором — берём первый (шапка формы)
 HELEKET_LOGO = "//a[@href='https://heleket.com']"
 
+# Контейнер с адресом кошелька — адрес хранится в атрибуте title этого div
+WALLET_ADDRESS_CONTAINER = "//p[text()='Адрес кошелька для перевода:']/following-sibling::div"
+
 
 class HeleketPage(BasePage):
     def __init__(self, page: Page):
@@ -21,3 +24,16 @@ class HeleketPage(BasePage):
         with allure.step("Проверяем наличие логотипа Heleket на странице"):
             # is_first_visible берёт первый из двух найденных элементов
             return self.is_first_visible(HELEKET_LOGO)
+
+    def attach_wallet_address(self) -> None:
+        """Извлекает адрес кошелька из атрибута title и прикрепляет к allure репорту"""
+        with allure.step("Извлекаем адрес кошелька для перевода"):
+            # Адрес хранится в атрибуте title div-контейнера под заголовком
+            wallet_address = self.page.locator(WALLET_ADDRESS_CONTAINER).get_attribute("title")
+
+        with allure.step(f"Адрес кошелька: {wallet_address}"):
+            allure.attach(
+                wallet_address or "Адрес не найден",
+                name="Адрес кошелька",
+                attachment_type=allure.attachment_type.TEXT
+            )

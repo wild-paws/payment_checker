@@ -9,34 +9,67 @@ URL = "https://www.starzspins.com/?modal=wallet&tab=deposit"
 PROVIDERS_API = "/api/deposit/get_providers"
 
 # Название провайдера платёжной интеграции которое ищем в ответе API
-PROVIDER_NAME = "Praxis"
+PROVIDER_NAME = "Praxis!"
+
+# Iframe в котором рендерится платёжная форма
+PAYMENT_IFRAME = "//iframe[@id='payment-iframe']"
+
+# Кнопка открытия выпадающего списка способов оплаты внутри iframe
+PAYMENT_METHOD_DROPDOWN = "//div[@class='custom-select-dropdown-arrow-container']"
+
+# Вариант оплаты USDT TRC-20 в выпадающем списке
+USDT_OPTION = "//div[text()='USDT TRC (Tether TRC-20)']"
+
+# Поле ввода суммы пополнения
+AMOUNT_INPUT = "//input[@name='amount']"
+
+# Кнопка подтверждения — после нажатия iframe перезагружается с реквизитами
+SUBMIT_BUTTON = "//button[@type='submit']"
+
+# Адрес кошелька для перевода — появляется после подтверждения суммы
+# Текст содержит пробелы по краям — нужен strip()
+WALLET_ADDRESS = "//span[@class='text']"
 
 
 class WalletPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
 
+    def open(self) -> "WalletPage":
+        with allure.step("Открываем страницу депозита"):
+            self._providers_response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
+        return self
+
     def is_payment_integration_present(self) -> bool:
-        """
-        Открывает страницу депозита, перехватывает ответ API со списком провайдеров
-        и проверяет наличие нужного провайдера в списке.
-        Возвращает True если провайдер найден, False если нет.
-        """
-        with allure.step("Открываем страницу депозита и перехватываем список провайдеров"):
-            # Переходим на страницу и одновременно ждём ответа от API провайдеров
-            # predicate — функция которая проверяет URL каждого ответа
-            response = self.goto(URL, lambda r: PROVIDERS_API in r.url)
+        providers = [p["code"] for p in self._providers_response.json().get("data", [])]
+        return PROVIDER_NAME in providers
 
-        with allure.step(f"Проверяем наличие провайдера {PROVIDER_NAME} в ответе API"):
-            # Извлекаем список кодов провайдеров из ответа
-            # Структура ответа: {"data": [{"code": "Praxis"}, ...]}
-            providers = [p["code"] for p in response.json().get("data", [])]
+    def attach_wallet_address(self) -> None:
+        """
+        Ждёт загрузки iframe, выбирает USDT TRC-20, вводит сумму,
+        подтверждает и извлекает адрес кошелька из перезагруженного iframe.
+        Прикрепляет адрес к allure репорту.
+        """
+        with allure.step("Ожидаем загрузки платёжного iframe"):
+            self.wait_for_selector(PAYMENT_IFRAME)
+            frame = self.page.frame_locator(PAYMENT_IFRAME)
 
-            # Прикрепляем список провайдеров к allure репорту для отладки
+        with allure.step("Выбираем способ оплаты: USDT TRC-20"):
+            frame.locator(PAYMENT_METHOD_DROPDOWN).click()
+            frame.locator(USDT_OPTION).click()
+
+        with allure.step("Вводим сумму и подтверждаем"):
+            frame.locator(AMOUNT_INPUT).fill("300")
+            frame.locator(SUBMIT_BUTTON).click()
+
+        with allure.step("Извлекаем адрес кошелька"):
+            self.wait_for_selector(PAYMENT_IFRAME)
+            frame = self.page.frame_locator(PAYMENT_IFRAME)
+            wallet_address = frame.locator(WALLET_ADDRESS).inner_text().strip()
+
+        with allure.step(f"Адрес кошелька: {wallet_address}"):
             allure.attach(
-                str(providers),
-                name="Список провайдеров",
+                wallet_address or "Адрес не найден",
+                name="Адрес кошелька",
                 attachment_type=allure.attachment_type.TEXT
             )
-
-            return PROVIDER_NAME in providers
