@@ -46,4 +46,5 @@ class LoginPage(BasePage):
             # После клика SPA авторизует пользователя без смены URL
             self.click(SUBMIT_BUTTON)
 
+        # SPA не делает редирект — CheckoutPage сам дождётся нужных элементов
         return CheckoutPage(self.page)

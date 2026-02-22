@@ -45,4 +45,6 @@ class LoginPage(BasePage):
             # и можно переходить к следующему шагу
             self.wait_for_selector(SUBMIT_BUTTON, state="hidden")
 
+        # open() вызывается здесь, а не в тесте — он перехватывает API ответ при переходе на страницу депозита
+        # если вызвать open() позже, API запрос уже уйдёт и ответ будет пропущен
         return WalletPage(self.page).open()

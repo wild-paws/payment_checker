@@ -68,10 +68,20 @@ def page(browser, request):
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
+    """
+    Хук pytest — выполняется после каждой фазы теста (setup, call, teardown).
+    При падении фазы call сохраняет трейс и видео в allure репорт.
+    tryfirst=True — запускаем раньше других хуков, чтобы успеть закрыть контекст.
+    hookwrapper=True — оборачивает выполнение хука, yield отдаёт управление pytest.
+    """
+    # yield передаёт управление pytest — после него тест уже выполнен
     outcome = yield
+    # rep содержит результат фазы: статус (passed/failed), исключение если было
     rep = outcome.get_result()
+    # Сохраняем результат фазы в атрибут item — фикстура page читает его как request.node.rep_call
     setattr(item, f"rep_{rep.when}", rep)
 
+    # Реагируем только на падение основной фазы теста, не setup/teardown
     if rep.when == "call" and rep.failed and "page" in item.funcargs:
         page = item.funcargs["page"]
         context = page.context
