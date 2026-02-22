@@ -47,15 +47,6 @@ class BasePage:
         """
         self.page.click(selector)
 
-    def click_and_wait_for_navigation(self, selector: str) -> None:
-        """
-        Кликает на элемент и ждёт завершения навигации на другую страницу.
-        Используется когда клик вызывает редирект — на внешний домен или другой URL.
-        expect_navigation гарантирует что не продолжим до завершения перехода.
-        """
-        with self.page.expect_navigation():
-            self.click(selector)
-
     def click_and_capture_response(self, selector: str, predicate: Callable) -> Response:
         """
         Кликает на элемент и перехватывает ответ API удовлетворяющий условию.

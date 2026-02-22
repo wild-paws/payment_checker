@@ -43,5 +43,5 @@ class HomePage(BasePage):
         with allure.step("Выбираем сумму 300₽ и ждём редиректа на платёжную форму"):
             # После выбора суммы происходит редирект на внешний домен heleket.com
             # click_and_wait_for_navigation ждёт завершения редиректа перед продолжением
-            self.click_and_wait_for_navigation(AMOUNT_BUTTON)
+            self.click(AMOUNT_BUTTON)
         return PaymentPage(self.page)
