@@ -16,11 +16,6 @@ class HeleketPage(BasePage):
 
     def is_payment_integration_present(self) -> bool:
         """Ждёт загрузки страницы и проверяет наличие логотипа Heleket"""
-        with allure.step("Ожидаем загрузки платёжной формы Heleket"):
-            # Ждём появления логотипа — страница Heleket грузится после редиректа
-            # без явного ожидания тест падает так как элемент ещё не в DOM
-            self.wait_for_selector(HELEKET_LOGO)
-
         with allure.step("Проверяем наличие логотипа Heleket на странице"):
             # is_first_visible берёт первый из двух найденных элементов
             return self.is_first_visible(HELEKET_LOGO)
@@ -29,6 +24,7 @@ class HeleketPage(BasePage):
         """Извлекает адрес кошелька из атрибута title и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька для перевода"):
             # Адрес хранится в атрибуте title div-контейнера под заголовком
+            # Playwright автоматически ждёт появления элемента перед get_attribute
             wallet_address = self.get_attribute(WALLET_ADDRESS_CONTAINER, "title")
 
         with allure.step(f"Адрес кошелька: {wallet_address}"):

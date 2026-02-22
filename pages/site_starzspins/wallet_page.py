@@ -64,7 +64,6 @@ class WalletPage(BasePage):
         Прикрепляет адрес к allure репорту.
         """
         with allure.step("Ожидаем загрузки платёжного iframe"):
-            self.wait_for_selector(PAYMENT_IFRAME)
             frame = self.page.frame_locator(PAYMENT_IFRAME)
 
         with allure.step("Выбираем способ оплаты: USDT TRC-20"):
@@ -76,8 +75,6 @@ class WalletPage(BasePage):
             frame.locator(SUBMIT_BUTTON).click()
 
         with allure.step("Извлекаем адрес кошелька"):
-            self.wait_for_selector(PAYMENT_IFRAME)
-            frame = self.page.frame_locator(PAYMENT_IFRAME)
             wallet_address = frame.locator(WALLET_ADDRESS).inner_text().strip()
 
         with allure.step(f"Адрес кошелька: {wallet_address}"):
