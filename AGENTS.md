@@ -19,6 +19,7 @@
 - `config/settings.py`
 - `requirements.txt`
 - Существующие сайты в `pages/` и `tests/`
+- Не добавляй `@pytest.mark.skip` на тесты которые пишешь — это только для тестов-примеров паттернов
 
 ---
 

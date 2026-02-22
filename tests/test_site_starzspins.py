@@ -1,8 +1,12 @@
 import allure
+import pytest
+
 from tests.base_test import BaseTest
 from pages.site_starzspins.login_page import LoginPage
 
 
+# Тест-пример паттерна 2 — закомментируй строку ниже чтобы запустить
+@pytest.mark.skip(reason="Пример паттерна — не запускать")
 @allure.feature("Starzspins.com")
 @allure.story("Платёжная интеграция Praxis")
 class TestStarzspins(BaseTest):

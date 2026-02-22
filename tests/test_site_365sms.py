@@ -1,8 +1,12 @@
 import allure
+import pytest
+
 from pages.site_365sms.login_page import LoginPage
 from tests.base_test import BaseTest
 
 
+# Тест-пример паттерна 1 — закомментируй строку ниже чтобы запустить
+@pytest.mark.skip(reason="Пример паттерна — не запускать")
 @allure.feature("365sms.com")
 @allure.story("Платёжная интеграция Heleket")
 class Test365sms(BaseTest):
