@@ -56,14 +56,6 @@ class BasePage:
         """
         return self.page.locator(selector).first.is_visible()
 
-
-    def get_text(self, selector: str) -> Optional[str]:
-        """
-        Возвращает текстовое содержимое первого найденного элемента по селектору.
-        Используется когда нужные данные находятся внутри текста элемента, а не в атрибуте.
-        """
-        return self.page.locator(selector).text_content()
-
     def get_attribute(self, selector: str, attribute: str) -> Optional[str]:
         """
         Возвращает значение атрибута элемента по XPath или CSS селектору.
