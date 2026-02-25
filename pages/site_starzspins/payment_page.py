@@ -77,4 +77,3 @@ class PaymentPage(BasePage):
                 name="Адрес кошелька",
                 attachment_type=allure.attachment_type.TEXT
             )
-            

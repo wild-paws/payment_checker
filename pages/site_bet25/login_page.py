@@ -5,16 +5,16 @@ from pages.site_bet25.home_page import HomePage
 # Главная страница сайта — точка входа
 URL = "https://bet25.com/"
 
-# Кнопка открытия формы входа в шапке сайта
+# Ссылка в шапке сайта которая открывает страницу входа
 SIGN_IN_BUTTON = "//a[text()='Login']"
 
-# Поле ввода логина в модальном окне входа
+# Поле ввода логина на странице входа
 LOGIN_INPUT = "//input[@id='login']"
 
-# Поле ввода пароля в модальном окне входа
+# Поле ввода пароля на странице входа
 PASSWORD_INPUT = "//input[@id='password']"
 
-# Кнопка подтверждения входа в модальном окне
+# Кнопка подтверждения входа на странице входа
 SUBMIT_BUTTON = "//button[@aria-label='sign in']"
 
 
@@ -27,9 +27,9 @@ class LoginPage(BasePage):
         return self
 
     def click_sign_in(self) -> "LoginPage":
-        """Кликает на кнопку входа и открывает модальное окно авторизации"""
-        with allure.step("Открываем форму входа"):
-            # После клика открывается модалка — URL меняется на /login
+        """Кликает на ссылку входа и открывает страницу авторизации"""
+        with allure.step("Открываем страницу входа"):
+            # После клика URL меняется на https://bet25.com/login
             self.click(SIGN_IN_BUTTON)
         return self
 
@@ -42,7 +42,7 @@ class LoginPage(BasePage):
             self.fill(PASSWORD_INPUT, password)
 
         with allure.step("Нажимаем кнопку входа"):
-            # После клика страница рендерится, URL возвращается на главную
+            # После клика происходит ререндер DOM, URL возвращается на https://bet25.com/
             self.click(SUBMIT_BUTTON)
 
         return HomePage(self.page)
