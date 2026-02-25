@@ -37,4 +37,3 @@ class LoginPage(BasePage):
             self.click(SUBMIT_BUTTON)
 
         return HomePage(self.page)
-    

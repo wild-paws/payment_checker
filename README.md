@@ -292,9 +292,8 @@ allure serve reports/allure
 >
 > **2) Главная страница:**
 >
-> Жму кнопку депозита в шапке: `//a[contains(@href, 'account/cashier/deposit')]`
+> Жму кнопку депозита в шапке: `//a[text()='Deposit']`
 >
-> Локатор по части href — текст кнопки меняется в зависимости от языка интерфейса
 > URL меняется на `https://example-casino.com/account/cashier/deposit`
 >
 > **3) Страница депозита:**

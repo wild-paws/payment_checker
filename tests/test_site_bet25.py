@@ -17,7 +17,7 @@ class TestBet25(BaseTest):
         "Авторизуемся на bet25.com, переходим в депозит, выбираем USDT, "
         "сохраняем адрес кошелька и проверяем его совпадение с известными адресами из .env")
     def test_payment_integration(self):
-        payment_page = (
+        deposit_page = (
             LoginPage(self.page)
             .open()
             .click_sign_in()
@@ -26,7 +26,7 @@ class TestBet25(BaseTest):
             .select_usdt()
         )
 
-        payment_page.attach_wallet_address()
+        deposit_page.attach_wallet_address()
 
-        assert payment_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
+        assert deposit_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
             "Адрес кошелька не совпал ни с одним из известных адресов в KNOWN_WALLETS"

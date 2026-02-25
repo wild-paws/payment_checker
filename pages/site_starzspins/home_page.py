@@ -25,4 +25,3 @@ class HomePage(BasePage):
                 lambda r: PROVIDERS_API in r.url
             )
         return PaymentPage(self.page, response)
-    
