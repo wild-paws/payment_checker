@@ -230,8 +230,9 @@ class PaymentPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
-            # Атрибут и селектор берутся из промта пользователя
-            wallet_address = self.get_attribute(WALLET_CONTAINER, "title")
+            # Селектор и атрибут берутся из промта пользователя
+            # Атрибут может быть "title", "value", "data-*" — зависит от сайта
+            wallet_address = self.get_attribute(WALLET_CONTAINER, "...")
         with allure.step(f"Адрес кошелька: {wallet_address}"):
             allure.attach(
                 wallet_address or "Адрес не найден",
