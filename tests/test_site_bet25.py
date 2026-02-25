@@ -7,7 +7,7 @@ from config.settings import settings
 
 
 # Тест-пример паттерна 3 — закомментируй строку ниже чтобы запустить
-@pytest.mark.skip(reason="Пример паттерна — не запускать")
+# @pytest.mark.skip(reason="Пример паттерна — не запускать")
 @allure.feature("bet25.com")
 @allure.story("Проверка адреса кошелька USDT")
 class TestBet25(BaseTest):

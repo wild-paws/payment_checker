@@ -2,11 +2,8 @@ import allure
 from pages.base_page import BasePage
 from pages.site_starzspins.home_page import HomePage
 
-# Главная страница сайта — точка входа
-URL = "https://www.starzspins.com/"
-
-# Кнопка открытия формы входа в шапке сайта
-SIGN_IN_BUTTON = "//button[@aria-label='sign_in']"
+# Стартовая страница с сразу открытой модалкой входа
+URL = "https://www.starzspins.com/?modal=login"
 
 # Поле ввода логина или email в модальном окне входа
 LOGIN_INPUT = "//input[@aria-label='Username or email']"
@@ -21,16 +18,10 @@ SUBMIT_BUTTON = "//button[@data-testid='login-submit-btn']"
 class LoginPage(BasePage):
 
     def open(self) -> "LoginPage":
-        """Открывает главную страницу сайта и возвращает себя для цепочки"""
-        with allure.step("Открываем сайт Starzspins"):
+        """Открывает страницу с модальным окном входа и возвращает себя для цепочки"""
+        with allure.step("Открываем сайт Starzspins с формой входа"):
+            # Модалка входа открывается сразу через параметр ?modal=login
             self.goto(URL)
-        return self
-
-    def click_sign_in(self) -> "LoginPage":
-        """Кликает на кнопку входа и открывает модальное окно авторизации"""
-        with allure.step("Открываем форму входа"):
-            # После клика открывается модалка — URL меняется на ?modal=login
-            self.click(SIGN_IN_BUTTON)
         return self
 
     def login(self, login: str, password: str) -> "HomePage":
@@ -42,7 +33,8 @@ class LoginPage(BasePage):
             self.fill(PASSWORD_INPUT, password)
 
         with allure.step("Нажимаем кнопку входа"):
-            # После клика SPA авторизует пользователя, URL возвращается на главную
+            # После клика происходит ререндер DOM, URL меняется на https://www.starzspins.com/
             self.click(SUBMIT_BUTTON)
 
         return HomePage(self.page)
+    

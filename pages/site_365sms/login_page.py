@@ -2,7 +2,7 @@ import allure
 from pages.base_page import BasePage
 from pages.site_365sms.home_page import HomePage
 
-# Главная страница сайта — точка входа для авторизации
+# Стартовая страница сайта — точка входа
 URL = "https://365sms.com/"
 
 # Кнопка в шапке сайта которая открывает модальное окно входа
@@ -40,8 +40,7 @@ class LoginPage(BasePage):
             self.fill(PASSWORD_INPUT, password)
 
         with allure.step("Нажимаем кнопку входа"):
-            # После клика SPA авторизует пользователя без смены URL
+            # После клика происходит ререндер DOM, URL остаётся https://365sms.com/
             self.click(SUBMIT_BUTTON)
 
-        # SPA не делает редирект — HomePage сам дождётся нужных элементов
         return HomePage(self.page)

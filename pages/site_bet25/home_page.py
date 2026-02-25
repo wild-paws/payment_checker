@@ -1,27 +1,18 @@
 import allure
 from pages.base_page import BasePage
-from pages.site_bet25.payment_page import PaymentPage
+from pages.site_bet25.deposit_page import DepositPage
 
-# Кнопка перехода в раздел депозита — появляется после авторизации
-DEPOSIT_BUTTON = "//a[text()='Deposit']"
-
-# Кнопка выбора валюты USDT — появляется после перехода в раздел депозита
-USDT_BUTTON = "//div[text()='USDT']"
+# Кнопка перехода к пополнению депозита в шапке — появляется после авторизации
+# Локатор по части href вместо текста кнопки: текст меняется в зависимости от языка интерфейса
+# Например: "Deposit" (EN), "Einzahlung" (DE), "Пополнить" (RU)
+DEPOSIT_BUTTON = "//a[contains(@href, '/account/cashier/deposit') and contains(@class, 'header-menu__item')]"
 
 
 class HomePage(BasePage):
 
-    def go_to_deposit(self) -> "HomePage":
-        """Переходит в раздел депозита и возвращает себя для цепочки"""
-        with allure.step("Переходим в раздел депозита"):
-            # После клика URL меняется на /account/cashier/deposit
+    def go_to_deposit(self) -> "DepositPage":
+        """Переходит на страницу пополнения депозита и возвращает её"""
+        with allure.step("Переходим на страницу пополнения депозита"):
+            # После клика URL меняется на https://bet25.com/account/cashier/deposit
             self.click(DEPOSIT_BUTTON)
-        return self
-
-    def select_usdt(self) -> "PaymentPage":
-        """Выбирает USDT и возвращает страницу с адресом кошелька"""
-        with allure.step("Выбираем валюту: USDT"):
-            # После клика URL меняется на /account/cashier/deposit/1076
-            # и появляется адрес кошелька для пополнения
-            self.click(USDT_BUTTON)
-        return PaymentPage(self.page)
+        return DepositPage(self.page)

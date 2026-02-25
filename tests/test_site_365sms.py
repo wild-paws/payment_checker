@@ -13,8 +13,9 @@ class Test365sms(BaseTest):
 
     @allure.title("Проверка наличия логотипа Heleket на платёжной форме")
     @allure.description(
-        "Авторизуемся на 365sms.com, переходим к форме оплаты через Crypto → USDT (TRC20) → 300₽, "
-        "проверяем наличие логотипа Heleket и сохраняем адрес кошелька")
+        "Авторизуемся на 365sms.com, переходим на страницу пополнения, "
+        "выбираем Crypto → USDT (TRC20) → 300₽, после редиректа на heleket.com "
+        "проверяем наличие логотипа провайдера и сохраняем адрес кошелька")
     def test_payment_integration(self):
         payment_page = (
             LoginPage(self.page)

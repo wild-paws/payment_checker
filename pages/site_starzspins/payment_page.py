@@ -3,9 +3,10 @@ from playwright.sync_api import Page, Response
 from pages.base_page import BasePage
 
 # Название провайдера платёжной интеграции которое ищем в ответе API
+# Находится в поле data[].code в JSON ответе /api/deposit/get_providers
 PROVIDER_NAME = "Praxis"
 
-# Iframe в котором рендерится платёжная форма
+# Iframe в котором рендерится платёжная форма внутри модального окна кошелька
 PAYMENT_IFRAME = "//iframe[@id='payment-iframe']"
 
 # Кнопка открытия выпадающего списка способов оплаты внутри iframe
@@ -39,16 +40,16 @@ class PaymentPage(BasePage):
         with allure.step("Выбираем способ оплаты: USDT TRC-20"):
             # Открываем выпадающий список способов оплаты
             self._frame.locator(PAYMENT_METHOD_DROPDOWN).click()
-            # Выбираем USDT TRC-20 — после этого появляется поле ввода суммы
+            # После клика появляются варианты валют
             self._frame.locator(USDT_OPTION).click()
         return self
 
     def confirm_amount(self) -> "PaymentPage":
         """Вводит сумму и подтверждает для получения реквизитов кошелька"""
         with allure.step("Вводим сумму и подтверждаем для получения реквизитов"):
-            # Вводим любую сумму — нам важен адрес кошелька, а не реальная оплата
             self._frame.locator(AMOUNT_INPUT).fill("300")
             # После клика iframe перестраивает DOM и показывает реквизиты для перевода
+            # Страница и модальное окно при этом не ререндерятся, URL не меняется
             self._frame.locator(SUBMIT_BUTTON).click()
         return self
 
@@ -56,6 +57,7 @@ class PaymentPage(BasePage):
         """
         Проверяет наличие нужного провайдера в перехваченном ответе API.
         Ответ был получен в момент открытия кошелька в HomePage.open_wallet().
+        Ищет провайдера по полю code в массиве data.
         Возвращает True если провайдер найден, False если нет.
         """
         with allure.step(f"Проверяем наличие провайдера {PROVIDER_NAME} в ответе API"):
@@ -75,3 +77,4 @@ class PaymentPage(BasePage):
                 name="Адрес кошелька",
                 attachment_type=allure.attachment_type.TEXT
             )
+            

@@ -2,22 +2,33 @@ import allure
 from playwright.sync_api import Page
 from pages.base_page import BasePage
 
-# Контейнер с адресом кошелька — адрес хранится в атрибуте title элемента p
-WALLET_ADDRESS_CONTAINER = "//p[text()='Deposit Address']/following-sibling::div/div/p"
+# Кнопка выбора валюты USDT — появляется после перехода на страницу депозита
+USDT_BUTTON = "//div[text()='USDT']"
+
+# Контейнер с адресом кошелька — адрес хранится в атрибуте value
+# Появляется после выбора USDT
+WALLET_ADDRESS_CONTAINER = "//div[@value]"
 
 
-class PaymentPage(BasePage):
+class DepositPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
         # Адрес кошелька — заполняется в attach_wallet_address()
         # используется в is_payment_integration_present() для проверки
         self._wallet_address = None
 
+    def select_usdt(self) -> "DepositPage":
+        """Выбирает USDT и возвращает себя — после клика появляется адрес кошелька"""
+        with allure.step("Выбираем валюту: USDT"):
+            # После клика на странице появляется адрес кошелька для пополнения
+            self.click(USDT_BUTTON)
+        return self
+
     def attach_wallet_address(self) -> None:
-        """Извлекает адрес кошелька из атрибута title и прикрепляет к allure репорту"""
+        """Извлекает адрес кошелька из атрибута value и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
-            # Адрес хранится в атрибуте title элемента p под заголовком Deposit Address
-            self._wallet_address = self.get_attribute(WALLET_ADDRESS_CONTAINER, "title")
+            # Адрес хранится в атрибуте value контейнера
+            self._wallet_address = self.get_attribute(WALLET_ADDRESS_CONTAINER, "value")
 
         with allure.step(f"Адрес кошелька: {self._wallet_address}"):
             allure.attach(
