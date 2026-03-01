@@ -23,7 +23,7 @@ SUBMIT_BUTTON = "//button[@type='submit']"
 
 # Адрес кошелька для перевода — появляется после подтверждения суммы
 # Текст содержит пробелы по краям — нужен strip()
-WALLET_ADDRESS = "//span[@class='text']"
+WALLET_ADDRESS = "//span[@class='truncate']"
 
 
 class PaymentPage(BasePage):

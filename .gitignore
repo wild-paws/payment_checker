@@ -7,3 +7,4 @@ __pycache__/
 *.iml
 reports/
 .vscode/
+browser_profile/
