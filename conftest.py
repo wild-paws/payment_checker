@@ -1,12 +1,11 @@
-from multiprocessing import context
 import os
 import shutil
+from urllib.parse import urlparse
 
 import allure
 import pytest
 from patchright.sync_api import sync_playwright
 from config.settings import settings
-from urllib.parse import urlparse
 
 # Фиксированный профиль браузера — живёт между запусками тестов.
 # В отличие от временного профиля, накапливает историю, куки и кеш —
@@ -58,6 +57,7 @@ def page(playwright_instance, request):
     Записывает видео во время теста.
     При падении хук pytest_runtest_makereport сохраняет видео в allure.
     При успехе — просто закрывает контекст без сохранения артефактов.
+    Трейс отключён из-за несовместимости patchright с context.tracing.start().
     """
     os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
 
@@ -111,7 +111,9 @@ def clear_session(page, request):
     page.goto(url)
 
     # Чистим куки только конкретного домена — глобальная очистка ломает профиль
-    # и вызывает капчу на сайтах которые проверяют историю браузера
+    # и вызывает капчу на сайтах которые проверяют историю браузера.
+    # Чистим оба варианта: с точкой (.site.com) и без (site.com) —
+    # разные сайты ставят куки по-разному
     for d in [domain, f".{domain}"]:
         page.context.clear_cookies(domain=d)
 

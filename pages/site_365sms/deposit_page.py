@@ -33,5 +33,7 @@ class DepositPage(BasePage):
         with allure.step("Выбираем сумму 300₽"):
             # После клика происходит полная перезагрузка страницы —
             # редирект на внешний домен https://new-pay.heleket.com/...
-            self.click(AMOUNT_BUTTON)
+            # expect_navigation регистрируется ДО клика — иначе быстрый редирект можно пропустить
+            with self.page.expect_navigation():
+                self.click(AMOUNT_BUTTON)
         return PaymentPage(self.page)

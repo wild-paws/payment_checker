@@ -1,6 +1,6 @@
 from typing import Optional, Callable
 
-from playwright.sync_api import Page, Response
+from patchright.sync_api import Page, Response
 
 
 class BasePage:
@@ -9,6 +9,15 @@ class BasePage:
     Содержит общие методы работы с браузером через Playwright.
     Все page объекты наследуются от этого класса.
     Прячет детали реализации Playwright — в наследниках используем только методы этого класса.
+
+    Исключение — self.page.expect_navigation() при редиректах на другой домен.
+    Используй его напрямую в методе страницы прямо перед возвратом нового page object:
+      with self.page.expect_navigation():
+          self.click(SOME_BUTTON)
+      return NextPage(self.page)
+
+    Не выноси expect_navigation в отдельный метод базового класса —
+    он чувствителен к уровню вызова в стеке и работает нестабильно через обёртку.
     """
 
     def __init__(self, page: Page):

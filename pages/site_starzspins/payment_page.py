@@ -1,5 +1,5 @@
 import allure
-from playwright.sync_api import Page, Response
+from patchright.sync_api import Page, Response
 from pages.base_page import BasePage
 
 # Название провайдера платёжной интеграции которое ищем в ответе API

@@ -1,5 +1,5 @@
 import allure
-from playwright.sync_api import Page
+from patchright.sync_api import Page
 from pages.base_page import BasePage
 
 # Кнопка выбора валюты USDT — появляется после перехода на страницу депозита
