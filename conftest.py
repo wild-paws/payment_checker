@@ -8,8 +8,7 @@ from patchright.sync_api import sync_playwright
 from config.settings import settings
 
 # Фиксированный профиль браузера — живёт между запусками тестов.
-# В отличие от временного профиля, накапливает историю, куки и кеш —
-# сайты видят "живой" профиль и не режут соединение как у бота.
+# Накапливает историю, куки и кеш — сайты не режут соединение как у бота.
 # Папка добавлена в .gitignore и не коммитится в репозиторий.
 BROWSER_PROFILE_DIR = os.path.join(os.path.dirname(__file__), "browser_profile")
 
@@ -21,9 +20,6 @@ def clean_reports():
     Выполняется автоматически один раз за сессию.
     Папки: reports/allure — данные для allure репорта,
            reports/videos — записи экранов при падении.
-    Трейс отключён — patchright несовместим с context.tracing.start():
-    CDP команды трейсинга детектируются некоторыми сайтами и вызывают
-    ERR_CONNECTION_CLOSED ещё до загрузки страницы.
     """
     for folder in ["reports/allure", "reports/videos"]:
         shutil.rmtree(folder, ignore_errors=True)  # ignore_errors — папки может не быть при первом запуске
@@ -47,17 +43,17 @@ def playwright_instance():
 def page(playwright_instance):
     """
     Создаёт persistent context и страницу для каждого теста.
+
     Persistent context — полноценный браузерный профиль, не инкогнито.
-    Это ключевое отличие от new_context(): сайты не режут соединение
-    по fingerprint, так как браузер выглядит как обычный пользователь.
+    Использует фиксированный профиль browser_profile/ — сайты не режут соединение
+    по fingerprint, так как браузер выглядит как обычный пользователь с историей.
 
-    Использует фиксированный профиль browser_profile/ вместо временного —
-    сайты не детектируют бота по пустому профилю без истории и куков.
+    Трейс отключён — patchright несовместим с context.tracing.start().
+    CDP команды трейсинга детектируются сайтами и вызывают ERR_CONNECTION_CLOSED.
+    При падении доступно только видео из allure репорта.
 
-    Записывает видео во время теста.
     При падении хук pytest_runtest_makereport сохраняет видео в allure.
     При успехе — просто закрывает контекст без сохранения артефактов.
-    Трейс отключён из-за несовместимости patchright с context.tracing.start().
     """
     os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
 
@@ -76,10 +72,10 @@ def page(playwright_instance):
 
     yield page
 
-    # Контекст мог быть уже закрыт хуком при падении теста — просто игнорируем
     try:
         context.close()
     except Exception:
+        # Контекст уже закрыт хуком pytest_runtest_makereport при падении теста
         pass
 
 
@@ -95,14 +91,14 @@ def clear_session(page, request):
     ломает профиль и вызывает капчу на чувствительных сайтах.
 
     Стратегии:
+      cookies — только куки (дефолт)
+                достаточно в большинстве случаев
       full    — куки + localStorage + sessionStorage + IndexedDB
-                используй когда сайт помнит сессию даже после очистки куков
-      cookies — только куки, storage не трогаем
-                используй когда очистка storage ломает работу сайта
+                используй если сайт помнит сессию даже после очистки куков
 
     Использование:
-      @pytest.mark.clear_session("https://site.com", strategy="full")
-      @pytest.mark.clear_session("https://site.com", strategy="cookies")
+      @pytest.mark.clear_session("https://site.com")                      # cookies (дефолт)
+      @pytest.mark.clear_session("https://site.com", strategy="full")     # куки + все хранилища
     """
     marker = request.node.get_closest_marker("clear_session")
     if not marker:
@@ -110,20 +106,19 @@ def clear_session(page, request):
         return
 
     url = marker.args[0]
-    strategy = marker.kwargs.get("strategy", "full")
+    strategy = marker.kwargs.get("strategy", "cookies")
     domain = urlparse(url).netloc  # например: starzspins.com, bet25.com
 
     # Открываем сайт чтобы получить доступ к его хранилищам
     page.goto(url)
 
     # Чистим куки только конкретного домена — глобальная очистка ломает профиль
-    # и вызывает капчу на сайтах которые проверяют историю браузера
     for d in [domain, f".{domain}"]:
         page.context.clear_cookies(domain=d)
 
     if strategy == "full":
         # Чистим все хранилища включая IndexedDB —
-        # некоторые сайты хранят сессию именно там а не в куках
+        # некоторые сайты хранят сессию именно там, а не в куках
         page.evaluate("""
             localStorage.clear();
             sessionStorage.clear();
@@ -142,13 +137,9 @@ def pytest_runtest_makereport(item, call):
     При падении фазы call сохраняет видео в allure репорт.
     tryfirst=True — запускаем раньше других хуков, чтобы успеть закрыть контекст.
     hookwrapper=True — оборачивает выполнение хука, yield отдаёт управление pytest.
-    Трейс отключён из-за несовместимости patchright с context.tracing.start().
     """
-    # yield передаёт управление pytest — после него тест уже выполнен
     outcome = yield
-    # rep содержит результат фазы: статус (passed/failed), исключение если было
     rep = outcome.get_result()
-    # Сохраняем результат фазы в атрибут item
     setattr(item, f"rep_{rep.when}", rep)
 
     # Реагируем только на падение основной фазы теста, не setup/teardown
