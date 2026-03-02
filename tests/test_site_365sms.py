@@ -6,7 +6,7 @@ from tests.base_test import BaseTest
 
 
 # Тест-пример паттерна 1 — закомментируй строку ниже чтобы запустить
-# @pytest.mark.skip(reason="Пример паттерна — не запускать")
+@pytest.mark.skip(reason="Пример паттерна — не запускать")
 @pytest.mark.clear_session("https://365sms.com", strategy="full")
 @allure.feature("365sms.com")
 @allure.story("Платёжная интеграция Heleket")

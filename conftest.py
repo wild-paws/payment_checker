@@ -134,11 +134,12 @@ def clear_session(page, request):
 @pytest.fixture(scope="function", autouse=True)
 def track_wallet(request):
     """
-    Устанавливает контекст текущего теста для wallet_log.
+    Устанавливает контекст текущего теста для wallet_log и сбрасывает его после.
     Позволяет page object'ам вызывать wallet_log.record() без передачи item напрямую.
     """
     wallet_log.set_current_test(request.node.nodeid)
     yield
+    wallet_log.clear_current_test()
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

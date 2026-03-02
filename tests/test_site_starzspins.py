@@ -6,7 +6,7 @@ from pages.site_starzspins.login_page import LoginPage
 
 
 # Тест-пример паттерна 2 — закомментируй строку ниже чтобы запустить
-# @pytest.mark.skip(reason="Пример паттерна — не запускать")
+@pytest.mark.skip(reason="Пример паттерна — не запускать")
 @pytest.mark.clear_session("https://www.starzspins.com", strategy="full")
 @allure.feature("Starzspins.com")
 @allure.story("Платёжная интеграция Praxis")

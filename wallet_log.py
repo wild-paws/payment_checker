@@ -19,9 +19,15 @@ def set_current_test(node_id: str) -> None:
     _current_node_id = node_id
 
 
+def clear_current_test() -> None:
+    """Сбрасывает контекст теста. Вызывается из conftest фикстуры после завершения теста."""
+    global _current_node_id
+    _current_node_id = None
+
+
 def record(site: str, wallet: Optional[str]) -> None:
     """
-    Записывает адрес кошелька для текущего теста.
+    Записывает адрес кошелька для текущего теста в буфер.
     Вызывается из attach_wallet_address() каждого page object.
     site — домен сайта, например "365sms.com".
     wallet — адрес кошелька, может быть None если элемент не нашёлся.
@@ -41,7 +47,7 @@ def record(site: str, wallet: Optional[str]) -> None:
 
 def process_result(node_id: str, passed: bool) -> None:
     """
-    Обновляет файл wallets_report.json по результату теста.
+    Обновляет файл wallets_report.json по результату теста и очищает буфер.
     Вызывается из pytest_runtest_makereport в conftest.
 
     Если тест прошёл — удаляет сайт из файла (проблема устранена).
@@ -52,7 +58,7 @@ def process_result(node_id: str, passed: bool) -> None:
     if node_id not in _buffer:
         return
 
-    entry = _buffer[node_id]
+    entry = _buffer.pop(node_id)  # убираем из буфера сразу — тест завершён
     site = entry["site"]
     wallets = entry["wallets"]
 
@@ -73,11 +79,18 @@ def process_result(node_id: str, passed: bool) -> None:
 
 
 def _load() -> dict:
-    """Загружает текущий файл отчёта. Возвращает пустой dict если файла нет."""
-    if os.path.exists(WALLET_LOG_FILE):
+    """
+    Загружает текущий файл отчёта.
+    Возвращает пустой dict если файла нет или он повреждён.
+    """
+    if not os.path.exists(WALLET_LOG_FILE):
+        return {}
+    try:
         with open(WALLET_LOG_FILE, encoding="utf-8") as f:
             return json.load(f)
-    return {}
+    except (json.JSONDecodeError, OSError):
+        # Файл повреждён — начинаем с чистого листа, не роняем хук
+        return {}
 
 
 def _save(data: dict) -> None:
