@@ -44,7 +44,7 @@ def playwright_instance():
 
 
 @pytest.fixture(scope="function")
-def page(playwright_instance, request):
+def page(playwright_instance):
     """
     Создаёт persistent context и страницу для каждого теста.
     Persistent context — полноценный браузерный профиль, не инкогнито.
@@ -86,18 +86,23 @@ def page(playwright_instance, request):
 @pytest.fixture(scope="function", autouse=True)
 def clear_session(page, request):
     """
-    Чистит сессию перед тестом.
+    Чистит сессию перед тестом согласно выбранной стратегии.
     Выполняется автоматически для каждого теста — но только если навешен маркер.
     Без маркера ничего не делает.
 
     URL передаётся чтобы открыть сайт и получить доступ к его хранилищам.
-    Куки чистятся только по домену из URL — глобальная очистка ломает профиль
-    и вызывает капчу на сайтах которые проверяют историю браузера.
+    Куки всегда чистятся только по домену из URL — глобальная очистка
+    ломает профиль и вызывает капчу на чувствительных сайтах.
 
-    По умолчанию чистит только куки.
-    Добавь strategy="full" если сайт помнит сессию даже после очистки куков:
-      @pytest.mark.clear_session("https://site.com")
+    Стратегии:
+      full    — куки + localStorage + sessionStorage + IndexedDB
+                используй когда сайт помнит сессию даже после очистки куков
+      cookies — только куки, storage не трогаем
+                используй когда очистка storage ломает работу сайта
+
+    Использование:
       @pytest.mark.clear_session("https://site.com", strategy="full")
+      @pytest.mark.clear_session("https://site.com", strategy="cookies")
     """
     marker = request.node.get_closest_marker("clear_session")
     if not marker:
@@ -105,19 +110,18 @@ def clear_session(page, request):
         return
 
     url = marker.args[0]
-    domain = urlparse(url).netloc
+    strategy = marker.kwargs.get("strategy", "full")
+    domain = urlparse(url).netloc  # например: starzspins.com, bet25.com
 
     # Открываем сайт чтобы получить доступ к его хранилищам
     page.goto(url)
 
     # Чистим куки только конкретного домена — глобальная очистка ломает профиль
-    # и вызывает капчу на сайтах которые проверяют историю браузера.
-    # Чистим оба варианта: с точкой (.site.com) и без (site.com) —
-    # разные сайты ставят куки по-разному
+    # и вызывает капчу на сайтах которые проверяют историю браузера
     for d in [domain, f".{domain}"]:
         page.context.clear_cookies(domain=d)
 
-    if marker.kwargs.get("strategy") == "full":
+    if strategy == "full":
         # Чистим все хранилища включая IndexedDB —
         # некоторые сайты хранят сессию именно там а не в куках
         page.evaluate("""
