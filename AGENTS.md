@@ -453,3 +453,38 @@ def open_wallet(self) -> "PaymentPage":
 - Паттерн 3 — `_wallet_address`
 
 **Аннотации типов** — на всех методах, включая `-> None`.
+
+---
+
+## wallet_log — запись кошельков
+
+Каждый page object обязан вызвать `wallet_log.record()` в `attach_wallet_address()`.
+Это нужно чтобы при падении теста кошелёк попал в `wallets_report.json` для проверки другим отделом.
+При успехе теста запись автоматически удаляется из файла.
+
+Правило: вызов `wallet_log.record()` идёт сразу после получения адреса, до `allure.attach()`.
+
+```python
+import wallet_log
+
+# Константа вверху файла рядом с остальными
+SITE = "example-casino.com"  # домен сайта
+
+
+def attach_wallet_address(self) -> None:
+    """Извлекает адрес кошелька и прикрепляет к allure репорту"""
+    with allure.step("Извлекаем адрес кошелька"):
+        wallet_address = self.get_attribute(WALLET_CONTAINER, "title")
+
+    wallet_log.record(SITE, wallet_address)  # ← обязательно
+
+    with allure.step(f"Адрес кошелька: {wallet_address}"):
+        allure.attach(
+            wallet_address or "Адрес не найден",
+            name="Адрес кошелька",
+            attachment_type=allure.attachment_type.TEXT
+        )
+```
+
+`SITE` — домен сайта в том виде в каком его узнают коллеги: `"365sms.com"`, `"starzspins.com"` и т.д.
+Берётся из URL константы в `login_page.py` того же сайта.

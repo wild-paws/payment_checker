@@ -6,6 +6,7 @@ import allure
 import pytest
 from patchright.sync_api import sync_playwright
 from config.settings import settings
+import wallet_log
 
 # Фиксированный профиль браузера — живёт между запусками тестов.
 # Накапливает историю, куки и кеш — сайты не режут соединение как у бота.
@@ -130,6 +131,16 @@ def clear_session(page, request):
     yield
 
 
+@pytest.fixture(scope="function", autouse=True)
+def track_wallet(request):
+    """
+    Устанавливает контекст текущего теста для wallet_log.
+    Позволяет page object'ам вызывать wallet_log.record() без передачи item напрямую.
+    """
+    wallet_log.set_current_test(request.node.nodeid)
+    yield
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """
@@ -142,25 +153,31 @@ def pytest_runtest_makereport(item, call):
     rep = outcome.get_result()
     setattr(item, f"rep_{rep.when}", rep)
 
-    # Реагируем только на падение основной фазы теста, не setup/teardown
-    if rep.when == "call" and rep.failed and "page" in item.funcargs:
-        page = item.funcargs["page"]
-        context = page.context
+    # Реагируем только на завершение основной фазы теста, не setup/teardown
+    if rep.when == "call" and "page" in item.funcargs:
 
-        # Берём путь до закрытия контекста — video объект доступен пока контекст жив
-        video_path = page.video.path()
-        # Закрываем контекст — только после этого Playwright записывает файл на диск
-        context.close()
+        # Обновляем файл кошельков по результату теста
+        wallet_log.process_result(item.nodeid, passed=not rep.failed)
 
-        try:
-            with open(video_path, "rb") as f:
-                allure.attach(
-                    f.read(),
-                    name="video",
-                    attachment_type=allure.attachment_type.WEBM
-                )
-        except Exception:
-            pass  # не даём упасть хуку если артефакт не удалось сохранить
+        # При падении сохраняем видео в allure
+        if rep.failed:
+            page = item.funcargs["page"]
+            context = page.context
+
+            # Берём путь до закрытия контекста — video объект доступен пока контекст жив
+            video_path = page.video.path()
+            # Закрываем контекст — только после этого Playwright записывает файл на диск
+            context.close()
+
+            try:
+                with open(video_path, "rb") as f:
+                    allure.attach(
+                        f.read(),
+                        name="video",
+                        attachment_type=allure.attachment_type.WEBM
+                    )
+            except Exception:
+                pass  # не даём упасть хуку если артефакт не удалось сохранить
 
 
 @pytest.fixture(scope="session")

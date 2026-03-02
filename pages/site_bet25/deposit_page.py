@@ -1,6 +1,7 @@
 import allure
 from patchright.sync_api import Page
 from pages.base_page import BasePage
+import wallet_log
 
 # Кнопка выбора валюты USDT — появляется после перехода на страницу депозита
 USDT_BUTTON = "//div[text()='USDT']"
@@ -8,6 +9,9 @@ USDT_BUTTON = "//div[text()='USDT']"
 # Контейнер с адресом кошелька — адрес хранится в атрибуте value
 # Появляется после выбора USDT
 WALLET_ADDRESS_CONTAINER = "//div[@value]"
+
+# Идентификатор сайта для wallet_log
+SITE = "bet25.com"
 
 
 class DepositPage(BasePage):
@@ -27,8 +31,9 @@ class DepositPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька из атрибута value и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
-            # Адрес хранится в атрибуте value контейнера
             self._wallet_address = self.get_attribute(WALLET_ADDRESS_CONTAINER, "value")
+
+        wallet_log.record(SITE, self._wallet_address)
 
         with allure.step(f"Адрес кошелька: {self._wallet_address}"):
             allure.attach(

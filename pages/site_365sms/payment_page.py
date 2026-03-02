@@ -1,5 +1,6 @@
 import allure
 from pages.base_page import BasePage
+import wallet_log
 
 # Логотип Heleket на платёжной форме — ссылка ведёт на сайт провайдера
 # На странице два элемента с этим селектором — берём первый (шапка формы)
@@ -7,6 +8,9 @@ HELEKET_LOGO = "//a[@href='https://heleket.com']"
 
 # Контейнер с адресом кошелька — адрес хранится в атрибуте title этого div
 WALLET_ADDRESS_CONTAINER = "//p[text()='Адрес кошелька для перевода:']/following-sibling::div"
+
+# Идентификатор сайта для wallet_log
+SITE = "365sms.com"
 
 
 class PaymentPage(BasePage):
@@ -20,9 +24,9 @@ class PaymentPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька из атрибута title и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька для перевода"):
-            # Адрес хранится в атрибуте title div-контейнера под заголовком
-            # Playwright автоматически ждёт появления элемента перед get_attribute
             wallet_address = self.get_attribute(WALLET_ADDRESS_CONTAINER, "title")
+
+        wallet_log.record(SITE, wallet_address)
 
         with allure.step(f"Адрес кошелька: {wallet_address}"):
             allure.attach(

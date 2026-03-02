@@ -1,6 +1,7 @@
 import allure
 from patchright.sync_api import Page, Response
 from pages.base_page import BasePage
+import wallet_log
 
 # Название провайдера платёжной интеграции которое ищем в ответе API
 # Находится в поле data[].code в JSON ответе /api/deposit/get_providers
@@ -24,6 +25,9 @@ SUBMIT_BUTTON = "//button[@type='submit']"
 # Адрес кошелька для перевода — появляется после подтверждения суммы
 # Текст содержит пробелы по краям — нужен strip()
 WALLET_ADDRESS = "//span[@class='truncate']"
+
+# Идентификатор сайта для wallet_log
+SITE = "starzspins.com"
 
 
 class PaymentPage(BasePage):
@@ -67,9 +71,10 @@ class PaymentPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька из iframe и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
-            # Адрес появляется в span после перестройки DOM внутри iframe
             # strip() убирает пробелы по краям которые есть в тексте элемента
             wallet_address = self._frame.locator(WALLET_ADDRESS).inner_text().strip()
+
+        wallet_log.record(SITE, wallet_address)
 
         with allure.step(f"Адрес кошелька: {wallet_address}"):
             allure.attach(
