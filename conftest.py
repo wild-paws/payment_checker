@@ -1,5 +1,5 @@
 import os
-import shutil
+import time
 from urllib.parse import urlparse
 
 import allure
@@ -17,14 +17,29 @@ BROWSER_PROFILE_DIR = os.path.join(os.path.dirname(__file__), "browser_profile")
 @pytest.fixture(scope="session", autouse=True)
 def clean_reports():
     """
-    Очищает и пересоздаёт папки с отчётами перед запуском тестов.
+    Удаляет устаревшие файлы отчётов перед запуском тестов.
     Выполняется автоматически один раз за сессию.
-    Папки: reports/allure — данные для allure репорта,
-           reports/videos — записи экранов при падении.
+
+    Политика хранения:
+      reports/allure — удаляем файлы старше 30 дней (история прогонов)
+      reports/videos — удаляем файлы старше 3 дней (только для разбора свежих падений)
+
+    Папки не пересоздаются с нуля — история накапливается между запусками.
+    Allure показывает все результаты за последние 30 дней в одном отчёте.
     """
-    for folder in ["reports/allure", "reports/videos"]:
-        shutil.rmtree(folder, ignore_errors=True)  # ignore_errors — папки может не быть при первом запуске
+    now = time.time()
+    limits = {
+        "reports/allure": 30 * 24 * 3600,
+        "reports/videos": 3 * 24 * 3600,
+    }
+
+    for folder, max_age in limits.items():
         os.makedirs(folder, exist_ok=True)
+        for filename in os.listdir(folder):
+            filepath = os.path.join(folder, filename)
+            if os.path.isfile(filepath) and now - os.path.getmtime(filepath) > max_age:
+                os.remove(filepath)
+
     yield
 
 
