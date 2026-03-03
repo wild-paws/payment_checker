@@ -1,4 +1,5 @@
 .env
+credentials.json
 __pycache__/
 .pytest_cache/
 *.pyc
@@ -9,4 +10,3 @@ reports/
 .vscode/
 browser_profile/
 wallets_report.json
-credentials.json

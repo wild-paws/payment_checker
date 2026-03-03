@@ -221,7 +221,7 @@ def confirm_amount(self) -> "PaymentPage":
 
 Некоторые сайты с агрессивной защитой могут выдать капчу при первом запуске на свежем профиле.
 Это нормально — профиль постепенно наполняется историей и куками.
-При повторном запуске тест перезапустится автоматически до 2 раз (reruns в pytest.ini).
+При повторном запуске тест перезапустится автоматически до 2 раз (retries в pytest.ini).
 
 Если тест упал после всех попыток — запусти его повторно вручную:
 ```bash
@@ -275,7 +275,7 @@ pytest --lf --alluredir=reports/allure -v
 `is_payment_integration_present()`.
 
 `AssertionError` на `is_payment_integration_present` — интеграция реально отсутствует, либо изменился формат ответа
-API, селектор логотипа, или адрес кошелька сменился и не обновлён в `KNOWN_WALLETS`.
+API, селектор логотипа, или адрес кошелька сменился и не обновлён в `known_wallets` в `credentials.json`.
 
 **Шаг 3 — если нужно добавить ожидание:**
 
@@ -459,7 +459,7 @@ class DepositPage(BasePage):
     def is_payment_integration_present(self, known_wallets: list[str]) -> bool:
         """
         Проверяет что адрес кошелька совпадает с одним из известных.
-        known_wallets — список адресов из KNOWN_WALLETS в .env.
+        known_wallets — список адресов из секции settings.known_wallets в credentials.json.
         Требует предварительного вызова attach_wallet_address().
         """
         with allure.step("Проверяем адрес кошелька по списку известных"):
@@ -472,12 +472,16 @@ from config.settings import settings
 
 deposit_page.attach_wallet_address()
 assert deposit_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
-    "Адрес кошелька не совпал ни с одним из известных адресов в KNOWN_WALLETS"
+    "Адрес кошелька не совпал ни с одним из известных адресов в known_wallets"
 ```
 
-Список кошельков хранится в `.env`:
-```
-KNOWN_WALLETS=TKfAamfPa5PDBxTG69jkY2qtZL9QFBXkZj,TXyz456def
+Список кошельков хранится в `credentials.json` в секции `settings`:
+```json
+{
+  "settings": {
+    "known_wallets": ["TKfAamfPa5PDBxTG69jkY2qtZL9QFBXkZj", "TXyz456def"]
+  }
+}
 ```
 
 ---

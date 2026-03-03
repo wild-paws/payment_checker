@@ -204,7 +204,12 @@ def credentials(request):
     Нормализация URL происходит в settings.get_credentials() — можно писать
     URL в любом формате, www. и trailing slash учитываются автоматически.
 
-    Если SITE_URL не задан в модуле — использует "default" напрямую.
+    Если SITE_URL не задан в модуле — использует запись "default" напрямую,
+    минуя нормализацию домена.
     """
     site_url = getattr(request.module, "SITE_URL", None)
-    return settings.get_credentials(site_url) if site_url else settings.get_credentials("default")
+    if site_url is None:
+        # SITE_URL не задан в модуле — используем default напрямую,
+        # минуя нормализацию чтобы не полагаться на случайное совпадение строки "default"
+        return settings.get_credentials("default")
+    return settings.get_credentials(site_url)

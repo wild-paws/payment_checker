@@ -13,7 +13,7 @@ class BaseTest:
         """
         Инициализирует page и credentials для каждого теста.
         page — новая вкладка браузера, создаётся в conftest.py.
-        credentials — словарь с логином и паролем из .env файла.
+        credentials — словарь с логином и паролем из credentials.json.
         pytest автоматически передаёт фикстуры из conftest.py по имени параметра.
         """
         self.page = page
