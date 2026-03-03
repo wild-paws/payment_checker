@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 from urllib.parse import urlparse
 
@@ -17,28 +18,25 @@ BROWSER_PROFILE_DIR = os.path.join(os.path.dirname(__file__), "browser_profile")
 @pytest.fixture(scope="session", autouse=True)
 def clean_reports():
     """
-    Удаляет устаревшие файлы отчётов перед запуском тестов.
+    Управляет папками с отчётами перед запуском тестов.
     Выполняется автоматически один раз за сессию.
 
-    Политика хранения:
-      reports/allure — удаляем файлы старше 30 дней (история прогонов)
-      reports/videos — удаляем файлы старше 3 дней (только для разбора свежих падений)
-
-    Папки не пересоздаются с нуля — история накапливается между запусками.
-    Allure показывает все результаты за последние 30 дней в одном отчёте.
+    reports/allure — удаляем файлы старше 30 дней, история накапливается между запусками.
+    reports/videos — полностью очищаем перед каждым прогоном (видео при падении
+                     уже аттачатся напрямую в allure, папка нужна только как временный буфер).
     """
     now = time.time()
-    limits = {
-        "reports/allure": 30 * 24 * 3600,
-        "reports/videos": 3 * 24 * 3600,
-    }
 
-    for folder, max_age in limits.items():
-        os.makedirs(folder, exist_ok=True)
-        for filename in os.listdir(folder):
-            filepath = os.path.join(folder, filename)
-            if os.path.isfile(filepath) and now - os.path.getmtime(filepath) > max_age:
-                os.remove(filepath)
+    # Allure — удаляем только устаревшее, история за 30 дней остаётся
+    os.makedirs("reports/allure", exist_ok=True)
+    for filename in os.listdir("reports/allure"):
+        filepath = os.path.join("reports/allure", filename)
+        if os.path.isfile(filepath) and now - os.path.getmtime(filepath) > 30 * 24 * 3600:
+            os.remove(filepath)
+
+    # Videos — полная очистка, файлы уже сохранены в allure аттачментах
+    shutil.rmtree("reports/videos", ignore_errors=True)
+    os.makedirs("reports/videos")
 
     yield
 
@@ -113,8 +111,8 @@ def clear_session(page, request):
                 используй если сайт помнит сессию даже после очистки куков
 
     Использование:
-      @pytest.mark.clear_session("https://site.com")                      # cookies (дефолт)
-      @pytest.mark.clear_session("https://site.com", strategy="full")     # куки + все хранилища
+      @pytest.mark.clear_session(SITE_URL)                      # cookies (дефолт)
+      @pytest.mark.clear_session(SITE_URL, strategy="full")     # куки + все хранилища
     """
     marker = request.node.get_closest_marker("clear_session")
     if not marker:
@@ -196,14 +194,17 @@ def pytest_runtest_makereport(item, call):
                 pass  # не даём упасть хуку если артефакт не удалось сохранить
 
 
-@pytest.fixture(scope="session")
-def credentials():
+@pytest.fixture(scope="function")
+def credentials(request):
     """
-    Возвращает словарь с кредами из .env файла.
-    Используется во всех тестах через BaseTest.setup.
-    Значения задаются в .env: LOGIN и PASSWORD.
+    Возвращает словарь с кредами для текущего теста.
+
+    Читает SITE_URL из модуля теста и ищет домен в credentials.json.
+    Если домен не найден — возвращает запись "default".
+    Нормализация URL происходит в settings.get_credentials() — можно писать
+    URL в любом формате, www. и trailing slash учитываются автоматически.
+
+    Если SITE_URL не задан в модуле — использует "default" напрямую.
     """
-    return {
-        "login": settings.LOGIN,
-        "password": settings.PASSWORD,
-    }
+    site_url = getattr(request.module, "SITE_URL", None)
+    return settings.get_credentials(site_url) if site_url else settings.get_credentials("default")

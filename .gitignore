@@ -9,3 +9,4 @@ reports/
 .vscode/
 browser_profile/
 wallets_report.json
+credentials.json

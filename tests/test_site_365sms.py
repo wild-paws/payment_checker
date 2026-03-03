@@ -4,11 +4,13 @@ import pytest
 from pages.site_365sms.login_page import LoginPage
 from tests.base_test import BaseTest
 
+SITE_URL = "https://365sms.com"
+
 
 # Тест-пример паттерна 1 — закомментируй строку ниже чтобы запустить
-@pytest.mark.skip(reason="Пример паттерна — не запускать")
-@pytest.mark.clear_session("https://365sms.com", strategy="full")
-@allure.feature("365sms.com")
+# @pytest.mark.skip(reason="Пример паттерна — не запускать")
+@pytest.mark.clear_session(SITE_URL, strategy="full")
+@allure.feature(SITE_URL)
 @allure.story("Платёжная интеграция Heleket")
 class Test365sms(BaseTest):
 

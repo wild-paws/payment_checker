@@ -1,35 +1,96 @@
+import json
 import os
-from dotenv import load_dotenv
+from urllib.parse import urlparse
 
-# Загружаем переменные из .env файла в окружение процесса
-# Должен вызываться до обращения к os.getenv()
-load_dotenv()
+# Путь к файлу с кредами — живёт в корне проекта рядом с conftest.py
+CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "..", "credentials.json")
 
 
 class Settings:
-    """Настройки проекта — загружаются из .env файла"""
+    """Настройки проекта — загружаются credentials.json"""
 
-    # Учётные данные для авторизации на сайтах — обязательные поля
-    LOGIN: str = os.getenv("LOGIN", "")
-    PASSWORD: str = os.getenv("PASSWORD", "")
+    def __init__(self):
+        data = self._load_credentials()
+        s = data.get("settings", {})
 
-    # false — браузер с окном (удобно для отладки), true — без окна (для CI)
-    HEADLESS: bool = os.getenv("HEADLESS", "false").lower() == "true"
+        # false — браузер с окном (удобно для отладки), true — без окна (для CI)
+        self.HEADLESS: bool = s.get("headless", False)
 
-    # Задержка между действиями в мс — 0 в нормальном режиме, 500-1000 для наблюдения
-    SLOW_MO: int = int(os.getenv("SLOW_MO", "0"))
+        # Задержка между действиями в мс — 0 в нормальном режиме, 500-1000 для наблюдения
+        self.SLOW_MO: int = s.get("slow_mo", 0)
 
-    # Список известных адресов крипто-кошельков через запятую
-    # Используется в паттерне 3 — когда провайдер неизвестен, но кошелёк проверить надо
-    KNOWN_WALLETS: list[str] = [
-        w.strip() for w in os.getenv("KNOWN_WALLETS", "").split(",") if w.strip()
-    ]
+        # Список известных адресов крипто-кошельков
+        # Используется в паттерне 3 — когда провайдер неизвестен, но кошелёк проверить надо
+        self.KNOWN_WALLETS: list[str] = s.get("known_wallets", [])
 
     @classmethod
-    def validate(cls):
-        """Проверяет что обязательные переменные заданы в .env"""
-        if not cls.LOGIN or not cls.PASSWORD:
-            raise ValueError("LOGIN и PASSWORD должны быть заданы в .env файле")
+    def get_credentials(cls, url: str) -> dict:
+        """
+        Возвращает логин и пароль для переданного URL.
+
+        Нормализует URL до чистого домена перед поиском — убирает схему (https://),
+        www. и trailing slash. Это позволяет писать в credentials.json просто "site.com"
+        независимо от того в каком формате записан SITE_URL в тестовом файле.
+
+        Примеры нормализации:
+          "https://www.starzspins.com/?modal=login" → "starzspins.com"
+          "https://365sms.com/"                     → "365sms.com"
+          "https://bet25.com"                       → "bet25.com"
+
+        Если домен не найден в credentials.json — возвращает запись "default".
+        Если credentials.json не существует — падает с понятной ошибкой.
+
+        Возвращает словарь: {"login": "...", "password": "..."}
+        """
+        credentials = cls._load_credentials()
+        domain = cls._normalize_domain(url)
+
+        if domain in credentials:
+            return credentials[domain]
+
+        if "default" in credentials:
+            return credentials["default"]
+
+        raise ValueError(
+            f"Домен '{domain}' не найден в credentials.json и нет записи 'default'. "
+            f"Добавь домен или запись default в credentials.json."
+        )
+
+    @classmethod
+    def validate(cls) -> None:
+        """Проверяет что credentials.json существует и содержит запись default."""
+        credentials = cls._load_credentials()
+        if "default" not in credentials:
+            raise ValueError(
+                "credentials.json не содержит запись 'default'. "
+                "Добавь её как fallback для сайтов без отдельных кредов."
+            )
+
+    @staticmethod
+    def _load_credentials() -> dict:
+        """Загружает credentials.json. Падает с понятной ошибкой если файла нет."""
+        path = os.path.normpath(CREDENTIALS_FILE)
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Файл credentials.json не найден: {path}\n"
+                f"Скопируй credentials.example.json → credentials.json и заполни данными."
+            )
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+
+    @staticmethod
+    def _normalize_domain(url: str) -> str:
+        """
+        Приводит URL или домен к единому формату для поиска в credentials.json.
+        Убирает схему, www. и trailing slash.
+        """
+        # Если передали просто домен без схемы — добавляем её чтобы urlparse не запутался
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+
+        domain = urlparse(url).netloc  # вычленяем host из URL
+        domain = domain.removeprefix("www.")  # убираем www.
+        return domain.lower()
 
 
 # Синглтон — импортируется во все модули, чтобы не создавать объект каждый раз

@@ -5,11 +5,13 @@ from tests.base_test import BaseTest
 from pages.site_bet25.login_page import LoginPage
 from config.settings import settings
 
+SITE_URL = "https://bet25.com"
+
 
 # Тест-пример паттерна 3 — закомментируй строку ниже чтобы запустить
-@pytest.mark.skip(reason="Пример паттерна — не запускать")
-@pytest.mark.clear_session("https://bet25.com")
-@allure.feature("bet25.com")
+# @pytest.mark.skip(reason="Пример паттерна — не запускать")
+@pytest.mark.clear_session(SITE_URL)
+@allure.feature(SITE_URL)
 @allure.story("Проверка адреса кошелька USDT")
 class TestBet25(BaseTest):
 

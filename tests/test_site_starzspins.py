@@ -4,11 +4,13 @@ import pytest
 from tests.base_test import BaseTest
 from pages.site_starzspins.login_page import LoginPage
 
+SITE_URL = "https://www.starzspins.com"
+
 
 # Тест-пример паттерна 2 — закомментируй строку ниже чтобы запустить
-@pytest.mark.skip(reason="Пример паттерна — не запускать")
-@pytest.mark.clear_session("https://www.starzspins.com", strategy="full")
-@allure.feature("Starzspins.com")
+# @pytest.mark.skip(reason="Пример паттерна — не запускать")
+@pytest.mark.clear_session(SITE_URL, strategy="full")
+@allure.feature(SITE_URL)
 @allure.story("Платёжная интеграция Praxis")
 class TestStarzspins(BaseTest):
 
