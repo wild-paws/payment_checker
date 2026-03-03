@@ -1,13 +1,19 @@
 import json
 import os
-from typing import Optional
+from typing import Optional, TypedDict
 
 # Файл живёт в корне проекта — не в reports/, та папка чистится перед каждым запуском
 WALLET_LOG_FILE = os.path.join(os.path.dirname(__file__), "wallets_report.json")
 
+
+class _TestEntry(TypedDict):
+    site: str
+    wallets: list[str]
+
+
 # Сессионный буфер — накапливает данные текущего прогона до записи в файл
 # Ключ: nodeid теста, значение: {site, wallets}
-_buffer: dict[str, dict] = {}
+_buffer: dict[str, _TestEntry] = {}
 
 # nodeid теста который выполняется прямо сейчас — устанавливается фикстурой в conftest
 _current_node_id: Optional[str] = None
@@ -84,7 +90,7 @@ def process_result(node_id: str, passed: bool) -> None:
     _save(data)
 
 
-def _load() -> dict:
+def _load() -> dict[str, list[str]]:
     """
     Загружает текущий файл отчёта.
     Возвращает пустой dict если файла нет или он повреждён.
@@ -99,7 +105,7 @@ def _load() -> dict:
         return {}
 
 
-def _save(data: dict) -> None:
+def _save(data: dict[str, list[str]]) -> None:
     """Записывает данные в файл. Если данных нет — удаляет файл."""
     if data:
         with open(WALLET_LOG_FILE, "w", encoding="utf-8") as f:

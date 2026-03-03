@@ -15,11 +15,11 @@ class HomePage(BasePage):
     def open_wallet(self) -> "PaymentPage":
         """
         Кликает на кнопку кошелька и перехватывает ответ API со списком провайдеров.
-        После клика URL меняется на ?modal=wallet&tab=deposit, открывается модальное окно.
-        API запрос уходит в момент клика — обработчик регистрируется до клика.
-        Возвращает PaymentPage с сохранённым ответом для последующей проверки.
+        Возвращает PaymentPage с сохранённым ответом для последующей проверки провайдера.
         """
         with allure.step("Открываем кошелёк и перехватываем список провайдеров"):
+            # После клика URL меняется на ?modal=wallet&tab=deposit
+            # API запрос уходит в момент клика — обработчик регистрируется до клика
             response = self.click_and_capture_response(
                 WALLET_BUTTON,
                 lambda r: PROVIDERS_API in r.url

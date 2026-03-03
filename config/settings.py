@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Any
 from urllib.parse import urlparse
 
 # Путь к файлу с кредами — живёт в корне проекта рядом с conftest.py
@@ -24,13 +25,13 @@ class Settings:
         self.KNOWN_WALLETS: list[str] = s.get("known_wallets", [])
 
     @classmethod
-    def get_credentials(cls, url: str) -> dict:
+    def get_credentials(cls, url: str) -> dict[str, str]:
         """
         Возвращает логин и пароль для переданного URL.
 
         Нормализует URL до чистого домена перед поиском — убирает схему (https://),
         www. и trailing slash. Это позволяет писать в credentials.json просто "site.com"
-        независимо от того в каком формате записан SITE_URL в тестовом файле.
+        независимо от того в каком формате записан BASE_URL в тестовом файле.
 
         Примеры нормализации:
           "https://www.starzspins.com/?modal=login" → "starzspins.com"
@@ -38,7 +39,7 @@ class Settings:
           "https://bet25.com"                       → "bet25.com"
 
         Если домен не найден в credentials.json — возвращает запись "default".
-        Если credentials.json не существует — падает с понятной ошибкой.
+        Если credentials.json не существует — падает с FileNotFoundError.
 
         Возвращает словарь: {"login": "...", "password": "..."}
         """
@@ -58,7 +59,10 @@ class Settings:
 
     @classmethod
     def validate(cls) -> None:
-        """Проверяет что credentials.json существует и содержит запись default."""
+        """
+        Проверяет что credentials.json существует и содержит запись default.
+        Падает с FileNotFoundError если файла нет, с ValueError если нет записи default.
+        """
         credentials = cls._load_credentials()
         if "default" not in credentials:
             raise ValueError(
@@ -67,8 +71,8 @@ class Settings:
             )
 
     @staticmethod
-    def _load_credentials() -> dict:
-        """Загружает credentials.json. Падает с понятной ошибкой если файла нет."""
+    def _load_credentials() -> dict[str, Any]:
+        """Загружает credentials.json. Падает с FileNotFoundError если файла нет."""
         path = os.path.normpath(CREDENTIALS_FILE)
         if not os.path.exists(path):
             raise FileNotFoundError(

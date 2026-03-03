@@ -175,7 +175,7 @@ def track_wallet(request):
 
 
 @pytest.hookimpl(tryfirst=True, wrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item, call):  # noqa: ARG001 — call требуется сигнатурой хука pytest
     """
     Хук pytest — выполняется после каждой фазы теста (setup, call, teardown).
     При падении фазы call сохраняет видео в allure репорт.
@@ -229,7 +229,7 @@ def credentials(request):
 
     Читает BASE_URL из модуля теста и ищет домен в credentials.json.
     BASE_URL импортируется в тест из __init__.py пакета сайта —
-    там же определён SITE, что гарантирует единое место для домена.
+    единственного места где определяется домен.
 
     Если домен не найден в credentials.json — возвращает запись "default".
     Нормализация URL происходит в settings.get_credentials() — www. и trailing slash

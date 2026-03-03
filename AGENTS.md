@@ -84,9 +84,9 @@ SITE = urlparse(BASE_URL).netloc.removeprefix("www.")
 Все остальные файлы пакета импортируют отсюда:
 
 ```python
-# login_page.py
+# login_page.py — стартовый URL строится из BASE_URL и пути конкретного сайта
 from pages.site_example import BASE_URL
-URL = BASE_URL + "/login"
+URL = BASE_URL + "/?modal=login"   # или "/login", или "/" — зависит от сайта
 
 # payment_page.py / deposit_page.py
 from pages.site_example import SITE
@@ -543,8 +543,9 @@ def confirm_amount(self) -> "PaymentPage":
 Если сумма встроена в XPath-локатор — выноси её в константу-локатор с комментарием о захардкоженном значении:
 
 ```python
-# Кнопка суммы 100 — если сайт изменит доступные суммы, обновить здесь
-AMOUNT_BUTTON = "//button[text()='100']"
+# Кнопка суммы — сумма '300₽' захардкожена в XPath.
+# Если сайт изменит доступные суммы — обновить значение здесь.
+AMOUNT_BUTTON = "//button/span[contains(text(),'300₽')]"
 ```
 
 **Аннотации типов** — на всех методах, включая `-> None` и `__init__`. Для атрибутов экземпляра — тоже:
@@ -577,11 +578,16 @@ with allure.step("Выбираем способ оплаты: USDT TRC-20"):
     self._frame.locator(PAYMENT_METHOD_DROPDOWN).click()
 ```
 
-**Docstring** — у каждого метода, коротко что делает и что возвращает:
+**Docstring** — у каждого метода, коротко что делает и что возвращает. Детали реализации — в комментариях
+внутри тела метода, не в docstring:
 
 ```python
 def open_wallet(self) -> "PaymentPage":
     """Кликает на кнопку кошелька и перехватывает список провайдеров"""
+    with allure.step("..."):
+        # API запрос уходит в момент клика — обработчик регистрируется до клика
+        response = self.click_and_capture_response(...)
+    return PaymentPage(self.page, response)
 ```
 
 **`__init__`** — не добавляй если только `super().__init__(page)`. Нужен если добавляешь свои атрибуты:
