@@ -14,6 +14,10 @@ import wallet_log
 # Папка добавлена в .gitignore и не коммитится в репозиторий.
 BROWSER_PROFILE_DIR = os.path.join(os.path.dirname(__file__), "browser_profile")
 
+# ВАЖНО: pytest должен запускаться из корня проекта.
+# Папки reports/ создаются относительно рабочей директории.
+# Если запустить из другой директории — reports/ окажется не в корне проекта.
+
 
 @pytest.fixture(scope="session", autouse=True)
 def clean_reports():
@@ -21,18 +25,23 @@ def clean_reports():
     Управляет папками с отчётами перед запуском тестов.
     Выполняется автоматически один раз за сессию.
 
-    reports/allure — удаляем файлы старше 30 дней, история накапливается между запусками.
+    reports/allure — удаляем файлы и папки старше 30 дней,
+                     история накапливается между запусками.
     reports/videos — полностью очищаем перед каждым прогоном (видео при падении
                      уже аттачатся напрямую в allure, папка нужна только как временный буфер).
     """
     now = time.time()
 
-    # Allure — удаляем только устаревшее, история за 30 дней остаётся
+    # Allure — удаляем только устаревшее (файлы и папки), история за 30 дней остаётся.
+    # Allure создаёт подпапки (history/, widgets/ и т.д.) — чистим их тоже.
     os.makedirs("reports/allure", exist_ok=True)
-    for filename in os.listdir("reports/allure"):
-        filepath = os.path.join("reports/allure", filename)
-        if os.path.isfile(filepath) and now - os.path.getmtime(filepath) > 30 * 24 * 3600:
-            os.remove(filepath)
+    for entry in os.listdir("reports/allure"):
+        entry_path = os.path.join("reports/allure", entry)
+        if now - os.path.getmtime(entry_path) > 30 * 24 * 3600:
+            if os.path.isfile(entry_path):
+                os.remove(entry_path)
+            elif os.path.isdir(entry_path):
+                shutil.rmtree(entry_path)
 
     # Videos — полная очистка, файлы уже сохранены в allure аттачментах
     shutil.rmtree("reports/videos", ignore_errors=True)
@@ -82,7 +91,8 @@ def page(playwright_instance):
 
     # pages[0] — уже открытая вкладка от persistent context.
     # new_page() открыла бы вторую лишнюю вкладку поверх неё.
-    page = context.pages[0]
+    # Fallback на new_page() на случай если pages почему-то пустой.
+    page = context.pages[0] if context.pages else context.new_page()
 
     yield page
 
@@ -101,8 +111,11 @@ def clear_session(page, request):
     Без маркера ничего не делает.
 
     URL передаётся чтобы открыть сайт и получить доступ к его хранилищам.
-    Куки всегда чистятся только по домену из URL — глобальная очистка
-    ломает профиль и вызывает капчу на чувствительных сайтах.
+    Куки чистятся по домену из URL — глобальная очистка ломает профиль
+    и вызывает капчу на чувствительных сайтах.
+
+    Для www-доменов чистятся куки и корневого домена тоже —
+    иначе куки установленные на .site.com не затрагиваются.
 
     Стратегии:
       cookies — только куки (дефолт)
@@ -121,13 +134,19 @@ def clear_session(page, request):
 
     url = marker.args[0]
     strategy = marker.kwargs.get("strategy", "cookies")
-    domain = urlparse(url).netloc  # например: starzspins.com, bet25.com
+    domain = urlparse(url).netloc  # например: www.starzspins.com, bet25.com
+    root_domain = domain.removeprefix("www.")  # starzspins.com — корневой домен без www.
 
     # Открываем сайт чтобы получить доступ к его хранилищам
     page.goto(url)
 
-    # Чистим куки только конкретного домена — глобальная очистка ломает профиль
-    for d in [domain, f".{domain}"]:
+    # Чистим куки по домену и корневому домену.
+    # Для www-доменов без этого куки на .site.com остались бы нетронутыми.
+    domains_to_clear = [domain, f".{domain}"]
+    if root_domain != domain:
+        domains_to_clear += [root_domain, f".{root_domain}"]
+
+    for d in domains_to_clear:
         page.context.clear_cookies(domain=d)
 
     if strategy == "full":
@@ -155,16 +174,16 @@ def track_wallet(request):
     wallet_log.clear_current_test()
 
 
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+@pytest.hookimpl(tryfirst=True, wrapper=True)
 def pytest_runtest_makereport(item, call):
     """
     Хук pytest — выполняется после каждой фазы теста (setup, call, teardown).
     При падении фазы call сохраняет видео в allure репорт.
     tryfirst=True — запускаем раньше других хуков, чтобы успеть закрыть контекст.
-    hookwrapper=True — оборачивает выполнение хука, yield отдаёт управление pytest.
+    wrapper=True  — современный синтаксис обёртки (hookwrapper deprecated в pytest 8+).
     """
-    outcome = yield
-    rep = outcome.get_result()
+    rep = yield
+
     setattr(item, f"rep_{rep.when}", rep)
 
     # Реагируем только на завершение основной фазы теста, не setup/teardown
@@ -178,20 +197,29 @@ def pytest_runtest_makereport(item, call):
             page = item.funcargs["page"]
             context = page.context
 
-            # Берём путь до закрытия контекста — video объект доступен пока контекст жив
-            video_path = page.video.path()
+            # Берём путь до закрытия контекста — video объект доступен пока контекст жив.
+            # page.video может быть None если видеозапись не инициализировалась.
+            video_path = None
+            try:
+                video_path = page.video.path()
+            except Exception:
+                pass
+
             # Закрываем контекст — только после этого Playwright записывает файл на диск
             context.close()
 
-            try:
-                with open(video_path, "rb") as f:
-                    allure.attach(
-                        f.read(),
-                        name="video",
-                        attachment_type=allure.attachment_type.WEBM
-                    )
-            except Exception:
-                pass  # не даём упасть хуку если артефакт не удалось сохранить
+            if video_path:
+                try:
+                    with open(video_path, "rb") as f:
+                        allure.attach(
+                            f.read(),
+                            name="video",
+                            attachment_type=allure.attachment_type.WEBM
+                        )
+                except Exception:
+                    pass  # не даём упасть хуку если артефакт не удалось сохранить
+
+    return rep
 
 
 @pytest.fixture(scope="function")

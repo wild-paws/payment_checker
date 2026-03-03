@@ -19,11 +19,15 @@ USDT_OPTION = "//div[text()='USDT TRC (Tether TRC-20)']"
 # Поле ввода суммы пополнения
 AMOUNT_INPUT = "//input[@name='amount']"
 
+# Сумма пополнения — минимальная рабочая сумма для получения реквизитов кошелька
+DEPOSIT_AMOUNT = "300"
+
 # Кнопка подтверждения — после нажатия iframe перестраивает DOM с реквизитами
 SUBMIT_BUTTON = "//button[@type='submit']"
 
-# Адрес кошелька для перевода — появляется после подтверждения суммы
-# Текст содержит пробелы по краям — нужен strip()
+# Адрес кошелька для перевода — появляется после подтверждения суммы.
+# truncate — утилитарный класс Tailwind, на странице может быть несколько элементов.
+# Используем .first чтобы избежать strict mode violation.
 WALLET_ADDRESS = "//span[@class='truncate']"
 
 # Идентификатор сайта для wallet_log
@@ -31,7 +35,7 @@ SITE = "starzspins.com"
 
 
 class PaymentPage(BasePage):
-    def __init__(self, page: Page, providers_response: Response):
+    def __init__(self, page: Page, providers_response: Response) -> None:
         super().__init__(page)
         # Ответ API с провайдерами — передаётся из HomePage.open_wallet()
         # is_payment_integration_present() использует его для проверки
@@ -50,8 +54,8 @@ class PaymentPage(BasePage):
 
     def confirm_amount(self) -> "PaymentPage":
         """Вводит сумму и подтверждает для получения реквизитов кошелька"""
-        with allure.step("Вводим сумму и подтверждаем для получения реквизитов"):
-            self._frame.locator(AMOUNT_INPUT).fill("300")
+        with allure.step(f"Вводим сумму {DEPOSIT_AMOUNT} и подтверждаем для получения реквизитов"):
+            self._frame.locator(AMOUNT_INPUT).fill(DEPOSIT_AMOUNT)
             # После клика iframe перестраивает DOM и показывает реквизиты для перевода
             # Страница и модальное окно при этом не ререндерятся, URL не меняется
             self._frame.locator(SUBMIT_BUTTON).click()
@@ -71,8 +75,10 @@ class PaymentPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька из iframe и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
+            # .first — на странице несколько элементов с классом truncate,
+            # берём первый чтобы избежать strict mode violation
             # strip() убирает пробелы по краям которые есть в тексте элемента
-            wallet_address = self._frame.locator(WALLET_ADDRESS).inner_text().strip()
+            wallet_address = self._frame.locator(WALLET_ADDRESS).first.inner_text().strip()
 
         wallet_log.record(SITE, wallet_address)
 

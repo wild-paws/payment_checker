@@ -20,7 +20,7 @@ class BasePage:
     он чувствителен к уровню вызова в стеке и работает нестабильно через обёртку.
     """
 
-    def __init__(self, page: Page):
+    def __init__(self, page: Page) -> None:
         # Объект страницы Playwright — основной инструмент взаимодействия с браузером
         self.page = page
 
@@ -45,12 +45,17 @@ class BasePage:
         """
         self.page.click(selector)
 
-    def click_and_capture_response(self, selector: str, predicate: Callable) -> Response:
+    def click_and_capture_response(
+        self,
+        selector: str,
+        predicate: Callable[[Response], bool],
+    ) -> Response:
         """
         Кликает на элемент и перехватывает ответ API удовлетворяющий условию.
         Используется когда клик вызывает API запрос который нужно сохранить для проверки.
-        predicate — функция принимающая response и возвращающая True/False.
-        Возвращает перехваченный response.
+
+        predicate — функция (response: Response) -> bool, возвращает True для нужного ответа.
+        Возвращает перехваченный Response.
         """
         # Регистрируем обработчик ДО клика — иначе можем пропустить быстрый ответ
         with self.page.expect_response(predicate) as response_info:

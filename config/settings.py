@@ -7,7 +7,7 @@ CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "..", "credentials.js
 
 
 class Settings:
-    """Настройки проекта — загружаются credentials.json"""
+    """Настройки проекта — загружаются из credentials.json"""
 
     def __init__(self):
         data = self._load_credentials()
@@ -81,14 +81,23 @@ class Settings:
     @staticmethod
     def _normalize_domain(url: str) -> str:
         """
-        Приводит URL или домен к единому формату для поиска в credentials.json.
-        Убирает схему, www. и trailing slash.
+        Приводит URL к чистому домену для поиска в credentials.json.
+
+        Убирает схему (http://, https://), www. и игнорирует path, query и fragment.
+        Порт сохраняется (site.com:8080 → site.com:8080) — такой домен нужно
+        прописывать в credentials.json вместе с портом.
+
+        Примеры:
+          "https://www.site.com/?modal=login" → "site.com"
+          "https://site.com/login"            → "site.com"
+          "http://site.com:8080"              → "site.com:8080"
+          "site.com"                          → "site.com"
         """
         # Если передали просто домен без схемы — добавляем её чтобы urlparse не запутался
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
 
-        domain = urlparse(url).netloc  # вычленяем host из URL
+        domain = urlparse(url).netloc  # вычленяем host (+ port если есть) из URL
         domain = domain.removeprefix("www.")  # убираем www.
         return domain.lower()
 

@@ -380,7 +380,7 @@ SITE = "example-casino.com"
 
 
 class PaymentPage(BasePage):
-    def __init__(self, page: Page, providers_response: Response):
+    def __init__(self, page: Page, providers_response: Response) -> None:
         super().__init__(page)
         self._providers_response = providers_response
         self._frame = self.page.frame_locator(PAYMENT_IFRAME)  # если форма в iframe
@@ -394,7 +394,7 @@ class PaymentPage(BasePage):
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька и прикрепляет к allure репорту"""
         with allure.step("Извлекаем адрес кошелька"):
-            wallet_address = self._frame.locator(WALLET_ADDRESS).inner_text().strip()
+            wallet_address = self._frame.locator(WALLET_ADDRESS).first.inner_text().strip()
 
         wallet_log.record(SITE, wallet_address)
 
@@ -438,9 +438,9 @@ SITE = "example-casino.com"
 
 
 class DepositPage(BasePage):
-    def __init__(self, page: Page):
+    def __init__(self, page: Page) -> None:
         super().__init__(page)
-        self._wallet_address = None
+        self._wallet_address: str | None = None
 
     def attach_wallet_address(self) -> None:
         """Извлекает адрес кошелька и прикрепляет к allure репорту"""
@@ -472,10 +472,11 @@ from config.settings import settings
 
 deposit_page.attach_wallet_address()
 assert deposit_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
-    "Адрес кошелька не совпал ни с одним из известных адресов в known_wallets"
+    "Адрес кошелька не совпал ни с одним из известных адресов в known_wallets (credentials.json)"
 ```
 
 Список кошельков хранится в `credentials.json` в секции `settings`:
+
 ```json
 {
   "settings": {
@@ -493,6 +494,50 @@ assert deposit_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
 ```python
 # Кнопка кошелька в шапке — появляется после авторизации
 WALLET_BUTTON = "//button[@aria-label='Wallet']"
+```
+
+**Без хардкода в телах методов.** Любая строка которая может измениться (суммы, названия, тексты кнопок) —
+выносить в константу на уровне модуля с комментарием. Не писать магические значения прямо в методах:
+
+```python
+# Правильно — константа с комментарием
+DEPOSIT_AMOUNT = "300"  # минимальная сумма для получения реквизитов
+
+def confirm_amount(self) -> "PaymentPage":
+    self._frame.locator(AMOUNT_INPUT).fill(DEPOSIT_AMOUNT)
+
+# Неправильно — магическое значение в методе
+def confirm_amount(self) -> "PaymentPage":
+    self._frame.locator(AMOUNT_INPUT).fill("300")
+```
+
+Если сумма встроена в XPath-локатор — выноси её в константу-локатор с комментарием о захардкоженном значении:
+
+```python
+# Кнопка суммы 100 — если сайт изменит доступные суммы, обновить здесь
+AMOUNT_BUTTON = "//button[text()='100']"
+```
+
+**Аннотации типов** — на всех методах, включая `-> None` и `__init__`. Для атрибутов экземпляра — тоже:
+
+```python
+def __init__(self, page: Page) -> None:
+    super().__init__(page)
+    self._wallet_address: str | None = None
+```
+
+**`Callable` — всегда с полной сигнатурой.** Не писать просто `Callable` — всегда указывать типы аргументов
+и возвращаемого значения:
+
+```python
+# Правильно
+from typing import Callable
+from patchright.sync_api import Response
+
+predicate: Callable[[Response], bool]
+
+# Неправильно
+predicate: Callable
 ```
 
 **Степы** — каждое действие в `allure.step`, описывай что происходит после клика:
@@ -514,8 +559,6 @@ def open_wallet(self) -> "PaymentPage":
 
 - Паттерн 2 — `_providers_response` и `_frame`
 - Паттерн 3 — `_wallet_address`
-
-**Аннотации типов** — на всех методах, включая `-> None`.
 
 ---
 

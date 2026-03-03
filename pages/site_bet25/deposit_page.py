@@ -6,8 +6,9 @@ import wallet_log
 # Кнопка выбора валюты USDT — появляется после перехода на страницу депозита
 USDT_BUTTON = "//div[text()='USDT']"
 
-# Контейнер с адресом кошелька — адрес хранится в атрибуте value
-# Появляется после выбора USDT
+# Контейнер с адресом кошелька — адрес хранится в атрибуте value.
+# Намеренно широкий локатор: div с атрибутом value уникален на этой странице.
+# Появляется после выбора USDT.
 WALLET_ADDRESS_CONTAINER = "//div[@value]"
 
 # Идентификатор сайта для wallet_log
@@ -15,11 +16,11 @@ SITE = "bet25.com"
 
 
 class DepositPage(BasePage):
-    def __init__(self, page: Page):
+    def __init__(self, page: Page) -> None:
         super().__init__(page)
         # Адрес кошелька — заполняется в attach_wallet_address()
         # используется в is_payment_integration_present() для проверки
-        self._wallet_address = None
+        self._wallet_address: str | None = None
 
     def select_usdt(self) -> "DepositPage":
         """Выбирает USDT и возвращает себя — после клика появляется адрес кошелька"""
@@ -45,7 +46,7 @@ class DepositPage(BasePage):
     def is_payment_integration_present(self, known_wallets: list[str]) -> bool:
         """
         Проверяет что адрес кошелька совпадает с одним из известных.
-        known_wallets — список адресов из переменной KNOWN_WALLETS в .env файле.
+        known_wallets — список адресов из секции settings.known_wallets в credentials.json.
         Требует предварительного вызова attach_wallet_address().
         Возвращает True если адрес найден в списке, False если нет.
         """

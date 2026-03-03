@@ -18,7 +18,8 @@ class TestBet25(BaseTest):
     @allure.title("Проверка адреса кошелька USDT на совпадение с известными")
     @allure.description(
         "Авторизуемся на bet25.com, переходим в депозит, выбираем USDT, "
-        "сохраняем адрес кошелька и проверяем его совпадение с известными адресами из .env")
+        "сохраняем адрес кошелька и проверяем его совпадение с известными адресами "
+        "из known_wallets в credentials.json")
     def test_payment_integration(self):
         deposit_page = (
             LoginPage(self.page)
@@ -32,4 +33,4 @@ class TestBet25(BaseTest):
         deposit_page.attach_wallet_address()
 
         assert deposit_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
-            "Адрес кошелька не совпал ни с одним из известных адресов в KNOWN_WALLETS"
+            "Адрес кошелька не совпал ни с одним из известных адресов в known_wallets (credentials.json)"
