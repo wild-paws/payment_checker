@@ -1,5 +1,6 @@
 import allure
 from pages.base_page import BasePage
+from pages.site_365sms import SITE
 import wallet_log
 
 # Логотип Heleket на платёжной форме — ссылка ведёт на сайт провайдера
@@ -8,9 +9,6 @@ HELEKET_LOGO = "//a[@href='https://heleket.com']"
 
 # Контейнер с адресом кошелька — адрес хранится в атрибуте title этого div
 WALLET_ADDRESS_CONTAINER = "//p[text()='Адрес кошелька для перевода:']/following-sibling::div"
-
-# Идентификатор сайта для wallet_log
-SITE = "365sms.com"
 
 
 class PaymentPage(BasePage):

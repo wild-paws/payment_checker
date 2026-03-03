@@ -1,9 +1,10 @@
 import allure
 from pages.base_page import BasePage
+from pages.site_bet25 import BASE_URL
 from pages.site_bet25.home_page import HomePage
 
 # Главная страница сайта — точка входа
-URL = "https://bet25.com/"
+URL = BASE_URL + "/"
 
 # Ссылка в шапке сайта которая открывает страницу входа
 SIGN_IN_BUTTON = "//a[text()='Login']"

@@ -1,6 +1,7 @@
 import allure
 from patchright.sync_api import Page
 from pages.base_page import BasePage
+from pages.site_bet25 import SITE
 import wallet_log
 
 # Кнопка выбора валюты USDT — появляется после перехода на страницу депозита
@@ -10,9 +11,6 @@ USDT_BUTTON = "//div[text()='USDT']"
 # Намеренно широкий локатор: div с атрибутом value уникален на этой странице.
 # Появляется после выбора USDT.
 WALLET_ADDRESS_CONTAINER = "//div[@value]"
-
-# Идентификатор сайта для wallet_log
-SITE = "bet25.com"
 
 
 class DepositPage(BasePage):

@@ -1,6 +1,7 @@
 import allure
 from patchright.sync_api import Page, Response
 from pages.base_page import BasePage
+from pages.site_starzspins import SITE
 import wallet_log
 
 # Название провайдера платёжной интеграции которое ищем в ответе API
@@ -29,9 +30,6 @@ SUBMIT_BUTTON = "//button[@type='submit']"
 # truncate — утилитарный класс Tailwind, на странице может быть несколько элементов.
 # Используем .first чтобы избежать strict mode violation.
 WALLET_ADDRESS = "//span[@class='truncate']"
-
-# Идентификатор сайта для wallet_log
-SITE = "starzspins.com"
 
 
 class PaymentPage(BasePage):

@@ -124,8 +124,8 @@ def clear_session(page, request):
                 используй если сайт помнит сессию даже после очистки куков
 
     Использование:
-      @pytest.mark.clear_session(SITE_URL)                      # cookies (дефолт)
-      @pytest.mark.clear_session(SITE_URL, strategy="full")     # куки + все хранилища
+      @pytest.mark.clear_session(BASE_URL)                      # cookies (дефолт)
+      @pytest.mark.clear_session(BASE_URL, strategy="full")     # куки + все хранилища
     """
     marker = request.node.get_closest_marker("clear_session")
     if not marker:
@@ -227,17 +227,20 @@ def credentials(request):
     """
     Возвращает словарь с кредами для текущего теста.
 
-    Читает SITE_URL из модуля теста и ищет домен в credentials.json.
-    Если домен не найден — возвращает запись "default".
-    Нормализация URL происходит в settings.get_credentials() — можно писать
-    URL в любом формате, www. и trailing slash учитываются автоматически.
+    Читает BASE_URL из модуля теста и ищет домен в credentials.json.
+    BASE_URL импортируется в тест из __init__.py пакета сайта —
+    там же определён SITE, что гарантирует единое место для домена.
 
-    Если SITE_URL не задан в модуле — использует запись "default" напрямую,
+    Если домен не найден в credentials.json — возвращает запись "default".
+    Нормализация URL происходит в settings.get_credentials() — www. и trailing slash
+    учитываются автоматически.
+
+    Если BASE_URL не задан в модуле — использует запись "default" напрямую,
     минуя нормализацию домена.
     """
-    site_url = getattr(request.module, "SITE_URL", None)
-    if site_url is None:
-        # SITE_URL не задан в модуле — используем default напрямую,
+    base_url = getattr(request.module, "BASE_URL", None)
+    if base_url is None:
+        # BASE_URL не задан в модуле — используем default напрямую,
         # минуя нормализацию чтобы не полагаться на случайное совпадение строки "default"
         return settings.get_credentials("default")
-    return settings.get_credentials(site_url)
+    return settings.get_credentials(base_url)

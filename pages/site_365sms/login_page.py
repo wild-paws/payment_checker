@@ -1,9 +1,10 @@
 import allure
 from pages.base_page import BasePage
+from pages.site_365sms import BASE_URL
 from pages.site_365sms.home_page import HomePage
 
 # Стартовая страница сайта — точка входа
-URL = "https://365sms.com/"
+URL = BASE_URL + "/"
 
 # Кнопка в шапке сайта которая открывает модальное окно входа
 OPEN_LOGIN_BUTTON = "//a[@data-da-index='4']"

@@ -1,9 +1,10 @@
 import allure
 from pages.base_page import BasePage
+from pages.site_starzspins import BASE_URL
 from pages.site_starzspins.home_page import HomePage
 
 # Стартовая страница с сразу открытой модалкой входа
-URL = "https://www.starzspins.com/?modal=login"
+URL = BASE_URL + "/?modal=login"
 
 # Поле ввода логина или email в модальном окне входа
 LOGIN_INPUT = "//input[@aria-label='Username or email']"
