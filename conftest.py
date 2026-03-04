@@ -1,3 +1,10 @@
+"""
+Фикстуры и хуки pytest — браузерный профиль, управление сессиями и allure-артефакты.
+
+Управляет жизненным циклом persistent browser context, очисткой отчётов,
+сбросом сессий перед тестами и сохранением видео при падениях.
+"""
+
 import os
 import shutil
 import time
@@ -6,6 +13,7 @@ from urllib.parse import urlparse
 import allure
 import pytest
 from patchright.sync_api import sync_playwright
+
 from config.settings import settings
 import wallet_log
 
@@ -37,11 +45,15 @@ def clean_reports():
     os.makedirs("reports/allure", exist_ok=True)
     for entry in os.listdir("reports/allure"):
         entry_path = os.path.join("reports/allure", entry)
-        if now - os.path.getmtime(entry_path) > 30 * 24 * 3600:
-            if os.path.isfile(entry_path):
-                os.remove(entry_path)
-            elif os.path.isdir(entry_path):
-                shutil.rmtree(entry_path)
+        try:
+            if now - os.path.getmtime(entry_path) > 30 * 24 * 3600:
+                if os.path.isfile(entry_path):
+                    os.remove(entry_path)
+                elif os.path.isdir(entry_path):
+                    shutil.rmtree(entry_path)
+        except OSError:
+            # Битый symlink или другая ошибка FS — пропускаем, не роняем сессию
+            pass
 
     # Videos — полная очистка, файлы уже сохранены в allure аттачментах
     shutil.rmtree("reports/videos", ignore_errors=True)
@@ -74,9 +86,6 @@ def page(playwright_instance):
     Трейс отключён — patchright несовместим с context.tracing.start().
     CDP команды трейсинга детектируются сайтами и вызывают ERR_CONNECTION_CLOSED.
     При падении доступно только видео из allure репорта.
-
-    При падении хук pytest_runtest_makereport сохраняет видео в allure.
-    При успехе — просто закрывает контекст без сохранения артефактов.
     """
     os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
 
@@ -92,9 +101,9 @@ def page(playwright_instance):
     # pages[0] — уже открытая вкладка от persistent context.
     # new_page() открыла бы вторую лишнюю вкладку поверх неё.
     # Fallback на new_page() на случай если pages почему-то пустой.
-    page = context.pages[0] if context.pages else context.new_page()
+    pg = context.pages[0] if context.pages else context.new_page()
 
-    yield page
+    yield pg
 
     try:
         context.close()
@@ -214,7 +223,7 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001 — call требуе
                         allure.attach(
                             f.read(),
                             name="video",
-                            attachment_type=allure.attachment_type.WEBM
+                            attachment_type=allure.attachment_type.WEBM,
                         )
                 except Exception:
                     pass  # не даём упасть хуку если артефакт не удалось сохранить
@@ -223,7 +232,7 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001 — call требуе
 
 
 @pytest.fixture(scope="function")
-def credentials(request):
+def credentials(request) -> dict[str, str]:
     """
     Возвращает словарь с кредами для текущего теста.
 
@@ -240,7 +249,6 @@ def credentials(request):
     """
     base_url = getattr(request.module, "BASE_URL", None)
     if base_url is None:
-        # BASE_URL не задан в модуле — используем default напрямую,
-        # минуя нормализацию чтобы не полагаться на случайное совпадение строки "default"
+        # BASE_URL не задан в модуле — используем default напрямую
         return settings.get_credentials("default")
     return settings.get_credentials(base_url)

@@ -40,7 +40,8 @@
 - `config/settings.py`
 - `requirements.txt`
 - Существующие сайты в `pages/` и `tests/`
-- Не добавляй `@pytest.mark.skip` на тесты которые пишешь — это только для тестов-примеров паттернов
+- Не добавляй `@pytest.mark.skip` на тесты которые пишешь — этот маркер зарезервирован
+  для тестов-примеров паттернов в `main` и управляется вручную
 
 ---
 
@@ -193,7 +194,7 @@ assert deposit_page.is_payment_integration_present(...), "..."
 
 ```python
 def confirm_amount(self) -> "PaymentPage":
-    """Подтверждает сумму и возвращает страницу платёжной формы провайдера"""
+    """Подтверждает сумму и возвращает страницу платёжной формы провайдера."""
     with allure.step("Подтверждаем сумму"):
         # После клика происходит полная перезагрузка —
         # редирект на внешний домен https://pay.provider.com/...
@@ -344,12 +345,12 @@ import wallet_log
 class PaymentPage(BasePage):
 
     def is_payment_integration_present(self) -> bool:
-        """Проверяет наличие логотипа провайдера на странице оплаты"""
+        """Проверяет наличие логотипа провайдера на странице оплаты."""
         with allure.step("Проверяем наличие логотипа ProviderName"):
             return self.is_first_visible(PROVIDER_LOGO)
 
     def attach_wallet_address(self) -> None:
-        """Извлекает адрес кошелька и прикрепляет к allure репорту"""
+        """Извлекает адрес кошелька и прикрепляет к allure репорту."""
         with allure.step("Извлекаем адрес кошелька"):
             wallet_address = self.get_attribute(WALLET_CONTAINER, "...")
 
@@ -395,7 +396,7 @@ PROVIDERS_API = "/api/deposit/get_providers"
 
 
 def open_wallet(self) -> "PaymentPage":
-    """Кликает на кнопку и перехватывает список провайдеров"""
+    """Кликает на кнопку и перехватывает список провайдеров."""
     with allure.step("Открываем кошелёк и перехватываем список провайдеров"):
         response = self.click_and_capture_response(
             WALLET_BUTTON,
@@ -416,13 +417,13 @@ class PaymentPage(BasePage):
         self._frame = self.page.frame_locator(PAYMENT_IFRAME)  # если форма в iframe
 
     def is_payment_integration_present(self) -> bool:
-        """Проверяет наличие провайдера в перехваченном ответе API"""
+        """Проверяет наличие провайдера в перехваченном ответе API."""
         with allure.step(f"Проверяем наличие провайдера {PROVIDER_NAME} в ответе API"):
             providers = [p["code"] for p in self._providers_response.json().get("data", [])]
             return PROVIDER_NAME in providers
 
     def attach_wallet_address(self) -> None:
-        """Извлекает адрес кошелька и прикрепляет к allure репорту"""
+        """Извлекает адрес кошелька и прикрепляет к allure репорту."""
         with allure.step("Извлекаем адрес кошелька"):
             wallet_address = self._frame.locator(WALLET_ADDRESS).first.inner_text().strip()
 
@@ -472,7 +473,7 @@ class DepositPage(BasePage):
         self._wallet_address: str | None = None
 
     def attach_wallet_address(self) -> None:
-        """Извлекает адрес кошелька и прикрепляет к allure репорту"""
+        """Извлекает адрес кошелька и прикрепляет к allure репорту."""
         with allure.step("Извлекаем адрес кошелька"):
             self._wallet_address = self.get_attribute(WALLET_CONTAINER, "...")
 
@@ -518,6 +519,16 @@ assert deposit_page.is_payment_integration_present(settings.KNOWN_WALLETS), \
 
 ## Оформление кода
 
+**Файловый docstring** — каждый `.py` файл начинается с краткого описания за что он отвечает:
+
+```python
+"""
+Страница авторизации на example-casino.com.
+
+Открывает форму входа, заполняет креды и возвращает HomePage после авторизации.
+"""
+```
+
 **Константы** — каждая с комментарием что это и когда появляется:
 
 ```python
@@ -548,7 +559,8 @@ def confirm_amount(self) -> "PaymentPage":
 AMOUNT_BUTTON = "//button/span[contains(text(),'300₽')]"
 ```
 
-**Аннотации типов** — на всех методах, включая `-> None` и `__init__`. Для атрибутов экземпляра — тоже:
+**Аннотации типов** — на всех методах, включая `-> None` и `__init__`. Для атрибутов экземпляра — тоже.
+Используй `str | None` вместо `Optional[str]` (Python 3.10+):
 
 ```python
 def __init__(self, page: Page) -> None:
@@ -583,7 +595,7 @@ with allure.step("Выбираем способ оплаты: USDT TRC-20"):
 
 ```python
 def open_wallet(self) -> "PaymentPage":
-    """Кликает на кнопку кошелька и перехватывает список провайдеров"""
+    """Кликает на кнопку кошелька и перехватывает список провайдеров."""
     with allure.step("..."):
         # API запрос уходит в момент клика — обработчик регистрируется до клика
         response = self.click_and_capture_response(...)
@@ -594,6 +606,17 @@ def open_wallet(self) -> "PaymentPage":
 
 - Паттерн 2 — `_providers_response` и `_frame`
 - Паттерн 3 — `_wallet_address`
+
+**Порядок импортов** — stdlib → third-party → local, с пустой строкой между группами:
+
+```python
+import allure                              # third-party
+from patchright.sync_api import Page       # third-party
+
+from pages.base_page import BasePage       # local
+from pages.site_example import SITE        # local
+import wallet_log                          # local
+```
 
 ---
 

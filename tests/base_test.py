@@ -1,3 +1,7 @@
+"""
+Базовый класс для всех тестов — инжектирует page и credentials через pytest фикстуры.
+"""
+
 import pytest
 
 
@@ -5,7 +9,7 @@ class BaseTest:
     """
     Базовый класс для всех тестов.
     Автоматически инжектирует page и credentials через фикстуру setup.
-    self.page и self.credentials доступны в каждом тесте после инициализации фикстурой.
+    self.page и self.credentials доступны в каждом тесте после инициализации.
     """
 
     @pytest.fixture(autouse=True)

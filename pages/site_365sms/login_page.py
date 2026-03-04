@@ -1,4 +1,12 @@
+"""
+Страница авторизации на 365sms.com.
+
+Открывает главную, кликает на кнопку входа, заполняет форму
+и возвращает HomePage после успешной авторизации.
+"""
+
 import allure
+
 from pages.base_page import BasePage
 from pages.site_365sms import BASE_URL
 from pages.site_365sms.home_page import HomePage
@@ -22,14 +30,14 @@ SUBMIT_BUTTON = "//button[@data-action='login']"
 class LoginPage(BasePage):
 
     def open(self) -> "LoginPage":
-        """Открывает главную страницу сайта и возвращает себя для цепочки вызовов"""
+        """Открывает главную страницу сайта и возвращает себя для цепочки вызовов."""
         with allure.step("Открываем сайт 365sms.com"):
             # Переходим на главную — форма входа появится после клика на кнопку
             self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "HomePage":
-        """Открывает модалку входа, заполняет форму и возвращает главную страницу"""
+        """Открывает модалку входа, заполняет форму и возвращает главную страницу."""
         with allure.step("Открываем форму входа"):
             # Кликаем на кнопку в шапке — появляется модальное окно с формой
             self.click(OPEN_LOGIN_BUTTON)

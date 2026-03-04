@@ -1,3 +1,7 @@
+"""
+Тест платёжной интеграции Praxis на starzspins.com (паттерн 2 — проверка по API).
+"""
+
 import allure
 import pytest
 
@@ -17,7 +21,8 @@ class TestStarzspins(BaseTest):
     @allure.description(
         "Авторизуемся на starzspins.com, открываем кошелёк, выбираем USDT TRC-20, "
         "подтверждаем сумму, проверяем наличие провайдера Praxis в ответе API "
-        "и сохраняем адрес кошелька")
+        "и сохраняем адрес кошелька"
+    )
     def test_payment_integration(self):
         payment_page = (
             LoginPage(self.page)

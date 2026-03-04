@@ -1,4 +1,12 @@
-from typing import Optional, Callable
+"""
+Базовый класс для всех page object'ов — обёртка над Playwright.
+
+Предоставляет набор методов для навигации, ввода, кликов и чтения атрибутов.
+Все страницы наследуются от BasePage и не вызывают self.page.* напрямую,
+за исключением frame_locator (iframe) и expect_navigation (редирект на внешний домен).
+"""
+
+from typing import Callable
 
 from patchright.sync_api import Page, Response
 
@@ -8,16 +16,6 @@ class BasePage:
     Базовый класс для всех страниц.
     Содержит общие методы работы с браузером через Playwright.
     Все page объекты наследуются от этого класса.
-    Прячет детали реализации Playwright — в наследниках используем только методы этого класса.
-
-    Исключение — self.page.expect_navigation() при редиректах на другой домен.
-    Используй его напрямую в методе страницы прямо перед возвратом нового page object:
-      with self.page.expect_navigation():
-          self.click(SOME_BUTTON)
-      return NextPage(self.page)
-
-    Не выноси expect_navigation в отдельный метод базового класса —
-    он чувствителен к уровню вызова в стеке и работает нестабильно через обёртку.
     """
 
     def __init__(self, page: Page) -> None:
@@ -70,7 +68,7 @@ class BasePage:
         """
         return self.page.locator(selector).first.is_visible()
 
-    def get_attribute(self, selector: str, attribute: str) -> Optional[str]:
+    def get_attribute(self, selector: str, attribute: str) -> str | None:
         """
         Возвращает значение атрибута элемента по XPath или CSS селектору.
         Используется когда нужные данные хранятся в атрибуте элемента, а не в тексте.

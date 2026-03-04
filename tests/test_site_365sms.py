@@ -1,3 +1,7 @@
+"""
+Тест платёжной интеграции Heleket на 365sms.com (паттерн 1 — проверка по логотипу).
+"""
+
 import allure
 import pytest
 
@@ -17,7 +21,8 @@ class Test365sms(BaseTest):
     @allure.description(
         "Авторизуемся на 365sms.com, переходим на страницу пополнения, "
         "выбираем Crypto → USDT (TRC20) → 300₽, после редиректа на heleket.com "
-        "проверяем наличие логотипа провайдера и сохраняем адрес кошелька")
+        "проверяем наличие логотипа провайдера и сохраняем адрес кошелька"
+    )
     def test_payment_integration(self):
         payment_page = (
             LoginPage(self.page)

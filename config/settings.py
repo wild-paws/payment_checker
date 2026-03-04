@@ -1,3 +1,10 @@
+"""
+Настройки проекта — загрузка конфигурации и кредов из credentials.json.
+
+Модуль предоставляет синглтон `settings` с параметрами браузера и списком известных кошельков,
+а также метод `get_credentials()` для получения логина и пароля по домену сайта.
+"""
+
 import json
 import os
 from typing import Any
@@ -8,9 +15,9 @@ CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "..", "credentials.js
 
 
 class Settings:
-    """Настройки проекта — загружаются из credentials.json"""
+    """Настройки проекта — загружаются из credentials.json."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         data = self._load_credentials()
         s = data.get("settings", {})
 
@@ -44,6 +51,17 @@ class Settings:
         Возвращает словарь: {"login": "...", "password": "..."}
         """
         credentials = cls._load_credentials()
+
+        # Прямой запрос записи "default" — не пропускаем через нормализацию домена,
+        # иначе urlparse вернёт пустой netloc и совпадение произойдёт случайно
+        if url == "default":
+            if "default" in credentials:
+                return credentials["default"]
+            raise ValueError(
+                "Запись 'default' не найдена в credentials.json. "
+                "Добавь её как fallback для сайтов без отдельных кредов."
+            )
+
         domain = cls._normalize_domain(url)
 
         if domain in credentials:

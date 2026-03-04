@@ -1,6 +1,14 @@
+"""
+Запись адресов крипто-кошельков при падении тестов в wallets_report.json.
+
+Буферизирует адреса во время прогона и обновляет файл по результату каждого теста:
+при падении — добавляет новые адреса без дублей, при успехе — удаляет сайт из файла.
+Файл передаётся в другой отдел для сверки с известными адресами.
+"""
+
 import json
 import os
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 # Файл живёт в корне проекта — не в reports/, та папка чистится перед каждым запуском
 WALLET_LOG_FILE = os.path.join(os.path.dirname(__file__), "wallets_report.json")
@@ -16,7 +24,7 @@ class _TestEntry(TypedDict):
 _buffer: dict[str, _TestEntry] = {}
 
 # nodeid теста который выполняется прямо сейчас — устанавливается фикстурой в conftest
-_current_node_id: Optional[str] = None
+_current_node_id: str | None = None
 
 
 def set_current_test(node_id: str) -> None:
@@ -31,7 +39,7 @@ def clear_current_test() -> None:
     _current_node_id = None
 
 
-def record(site: str, wallet: Optional[str]) -> None:
+def record(site: str, wallet: str | None) -> None:
     """
     Записывает адрес кошелька для текущего теста в буфер.
     Вызывается из attach_wallet_address() каждого page object.

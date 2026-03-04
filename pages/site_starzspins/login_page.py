@@ -1,4 +1,12 @@
+"""
+Страница авторизации на starzspins.com.
+
+Открывает страницу с модальным окном входа через параметр ?modal=login,
+заполняет форму и возвращает HomePage после успешной авторизации.
+"""
+
 import allure
+
 from pages.base_page import BasePage
 from pages.site_starzspins import BASE_URL
 from pages.site_starzspins.home_page import HomePage
@@ -19,14 +27,14 @@ SUBMIT_BUTTON = "//button[@data-testid='login-submit-btn']"
 class LoginPage(BasePage):
 
     def open(self) -> "LoginPage":
-        """Открывает страницу с модальным окном входа и возвращает себя для цепочки"""
+        """Открывает страницу с модальным окном входа и возвращает себя для цепочки."""
         with allure.step("Открываем сайт Starzspins с формой входа"):
             # Модалка входа открывается сразу через параметр ?modal=login
             self.goto(URL)
         return self
 
     def login(self, login: str, password: str) -> "HomePage":
-        """Заполняет форму входа и возвращает главную страницу после авторизации"""
+        """Заполняет форму входа и возвращает главную страницу после авторизации."""
         with allure.step(f"Вводим логин: {login}"):
             self.fill(LOGIN_INPUT, login)
 

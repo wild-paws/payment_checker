@@ -1,9 +1,13 @@
+"""
+Тест проверки адреса кошелька USDT на bet25.com (паттерн 3 — проверка по адресу).
+"""
+
 import allure
 import pytest
 
+from config.settings import settings
 from pages.site_bet25 import BASE_URL
 from pages.site_bet25.login_page import LoginPage
-from config.settings import settings
 from tests.base_test import BaseTest
 
 
@@ -18,7 +22,8 @@ class TestBet25(BaseTest):
     @allure.description(
         "Авторизуемся на bet25.com, переходим в депозит, выбираем USDT, "
         "сохраняем адрес кошелька и проверяем его совпадение с известными адресами "
-        "из known_wallets в credentials.json")
+        "из known_wallets в credentials.json"
+    )
     def test_payment_integration(self):
         deposit_page = (
             LoginPage(self.page)

@@ -1,4 +1,12 @@
+"""
+Страница пополнения баланса на 365sms.com.
+
+Выбор способа оплаты (Crypto → USDT TRC20 → сумма) и редирект
+на платёжную форму провайдера.
+"""
+
 import allure
+
 from pages.base_page import BasePage
 from pages.site_365sms.payment_page import PaymentPage
 
@@ -17,21 +25,21 @@ AMOUNT_BUTTON = "//button/span[contains(text(),'300₽')]"
 class DepositPage(BasePage):
 
     def select_crypto(self) -> "DepositPage":
-        """Выбирает способ оплаты Crypto и возвращает себя для цепочки"""
+        """Выбирает способ оплаты Crypto и возвращает себя для цепочки."""
         with allure.step("Выбираем способ оплаты: Crypto"):
             # После клика появляются доступные криптовалюты
             self.click(CRYPTO_BUTTON)
         return self
 
     def select_usdt_trc20(self) -> "DepositPage":
-        """Выбирает валюту USDT TRC20 и возвращает себя для цепочки"""
+        """Выбирает валюту USDT TRC20 и возвращает себя для цепочки."""
         with allure.step("Выбираем валюту: USDT (TRC20)"):
             # После выбора валюты появляются доступные суммы
             self.click(USDT_BUTTON)
         return self
 
     def confirm_amount(self) -> "PaymentPage":
-        """Выбирает сумму 300₽ и возвращает страницу формы оплаты провайдера"""
+        """Выбирает сумму 300₽ и возвращает страницу формы оплаты провайдера."""
         with allure.step("Выбираем сумму 300₽"):
             # После клика происходит полная перезагрузка страницы —
             # редирект на внешний домен https://new-pay.heleket.com/...
