@@ -11,7 +11,7 @@ from tests.base_test import BaseTest
 
 
 # Тест-пример паттерна 2 — закомментируй строку ниже чтобы запустить
-# @pytest.mark.skip(reason="Пример паттерна — не запускать")
+@pytest.mark.skip(reason="Пример паттерна — не запускать")
 @pytest.mark.clear_session(BASE_URL, strategy="full")
 @allure.feature(BASE_URL)
 @allure.story("Платёжная интеграция Praxis")

@@ -47,6 +47,5 @@ class BalancePage(BasePage):
         with allure.step("Нажимаем кнопку продолжения и ждём редирект на провайдера"):
             # После клика происходит полная перезагрузка страницы —
             # редирект на внешний домен https://new-pay.heleket.com/...
-            with self.page.expect_navigation():
-                self.click(CONTINUE_BUTTON)
+            self.click(CONTINUE_BUTTON)
         return ProviderOptionsPage(self.page)
