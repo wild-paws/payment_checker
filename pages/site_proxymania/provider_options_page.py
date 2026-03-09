@@ -29,11 +29,8 @@ GO_TO_PAYMENT_BUTTON = "//span[text()='Перейти к оплате']"
 class ProviderOptionsPage(BasePage):
 
     def select_usdt(self) -> "ProviderOptionsPage":
-        """Ожидает загрузку выбора валюты, открывает список и выбирает USDT."""
+        """Открывает список валют и выбирает USDT."""
         with allure.step("Выбираем валюту USDT"):
-            # После редиректа DOM провайдера может рендериться с задержкой —
-            # ждём появления контролла выбора валюты перед первым кликом.
-            self.page.wait_for_selector(CURRENCY_DROPDOWN)
             self.click(CURRENCY_DROPDOWN)
             # После клика отображаются варианты валют
             self.click(USDT_OPTION)
