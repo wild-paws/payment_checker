@@ -2,19 +2,19 @@
 Страница баланса proxymania.su.
 
 Выбирает способ пополнения, вводит сумму и редиректит
-на внешнюю платёжную форму провайдера.
+на внешний домен провайдера Heleket.
 """
 
 import allure
 
 from pages.base_page import BasePage
-from pages.site_proxymania.payment_page import PaymentPage
+from pages.site_proxymania.provider_options_page import ProviderOptionsPage
 
 # Выпадающий список выбора способа пополнения на странице баланса
-PAYMENT_METHOD_DROPDOWN = "//span[@id='select2-payMethod-container']"
+PAYMENT_METHOD_DROPDOWN = "//b[@role='presentation']"
 
-# Вариант способа пополнения (ID из текущей DOM-разметки сайта)
-PAYMENT_METHOD_OPTION = "//li[@id='select2-payMethod-result-bsoy-15']"
+# Вариант способа пополнения Crypto в списке способов оплаты
+PAYMENT_METHOD_OPTION = "//li[text()='Crypto (BTC, ETH, LTC, TON, TRX, USDT)']"
 
 # Поле ввода суммы пополнения
 AMOUNT_INPUT = "//input[@id='paySum']"
@@ -30,9 +30,9 @@ class BalancePage(BasePage):
 
     def select_payment_method(self) -> "BalancePage":
         """Открывает выпадающий список и выбирает способ пополнения."""
-        with allure.step("Выбираем способ пополнения"):
+        with allure.step("Выбираем способ пополнения Crypto"):
             self.click(PAYMENT_METHOD_DROPDOWN)
-            # После клика по опции выбранный способ подставляется в форму
+            # После клика по опции выбранный способ подставляется в форму пополнения
             self.click(PAYMENT_METHOD_OPTION)
         return self
 
@@ -42,11 +42,11 @@ class BalancePage(BasePage):
             self.fill(AMOUNT_INPUT, DEPOSIT_AMOUNT)
         return self
 
-    def continue_to_payment(self) -> "PaymentPage":
-        """Подтверждает сумму и возвращает страницу платёжной формы провайдера."""
+    def continue_to_payment(self) -> "ProviderOptionsPage":
+        """Подтверждает сумму и возвращает страницу провайдера с выбором валюты/сети."""
         with allure.step("Нажимаем кнопку продолжения и ждём редирект на провайдера"):
             # После клика происходит полная перезагрузка страницы —
             # редирект на внешний домен https://new-pay.heleket.com/...
             with self.page.expect_navigation():
                 self.click(CONTINUE_BUTTON)
-        return PaymentPage(self.page)
+        return ProviderOptionsPage(self.page)
